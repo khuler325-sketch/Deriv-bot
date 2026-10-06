@@ -1,1714 +1,988 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DERIV HIGHER/LOWER RESEARCH BOT — V0.1</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            mono: ['"JetBrains Mono"', 'monospace'],
-            sans: ['"Space Grotesk"', 'sans-serif'],
-          },
-          colors: {
-            zinc: {
-              950: '#090a0c',
-              900: '#111317',
-              850: '#16191f',
-              800: '#1d2129',
-              750: '#252a35',
-              700: '#323946',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    body {
-      background-color: #090a0c;
-      color: #e2e8f0;
-      font-family: 'Space Grotesk', sans-serif;
-      overflow-x: hidden;
-    }
-    .font-mono-numbers {
-      font-family: 'JetBrains Mono', monospace;
-      font-variant-numeric: tabular-nums;
-    }
-    /* Subtle custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0d0f12;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #252a35;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #3b4353;
-    }
-    .glow-subtle {
-      box-shadow: 0 0 15px -3px rgba(255, 255, 255, 0.05);
-    }
-    .border-subtle {
-      border-color: rgba(255, 255, 255, 0.08);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DERIV HIGHER/LOWER RESEARCH BOT — V0.1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','system-ui','sans-serif'], mono: ['JetBrains Mono','monospace'] } } } }
+</script>
+<style>
+*{font-family:'Inter',system-ui,-apple-system,sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+body{background:#070707;color:#fafafa;overflow-x:hidden;background-image:radial-gradient(ellipse 80% 30% at 50% -5%, rgba(255,255,255,0.06), transparent);}
+.panel{background:linear-gradient(180deg,#121212 0%,#0f0f0f 100%);border:1px solid #262626;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px rgba(0,0,0,0.35)}
+.panel-soft{background:#0e0e0e;border:1px solid #222}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0a0a0a}
+::-webkit-scrollbar-thumb{background:#2a2a2e;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:#3f3f46}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+input:focus{outline:none;border-color:#52525b !important;box-shadow:0 0 0 1px #52525b}
+canvas{image-rendering:-webkit-optimize-contrast}
+.tick-flash-up{animation:flashUp .4s ease}
+.tick-flash-down{animation:flashDown .4s ease}
+@keyframes flashUp{0%{color:#fff;text-shadow:0 0 18px rgba(255,255,255,.6)}100%{color:#fafafa;text-shadow:none}}
+@keyframes flashDown{0%{color:#71717a}100%{color:#fafafa}}
+.signal-glow-higher{box-shadow:0 0 0 1px #fff, 0 0 32px rgba(255,255,255,.18)}
+.signal-glow-lower{box-shadow:0 0 0 1px #52525b, 0 0 24px rgba(0,0,0,.6)}
+.dot-live{box-shadow:0 0 8px rgba(255,255,255,.9)}
+.conf-bar{background:linear-gradient(90deg,#52525b 0%,#a1a1aa 50%,#ffffff 100%)}
+.grid-bg{background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:28px 28px}
+.toast-in{animation:toastIn .28s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes toastIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.pulse-soft{animation:pulseSoft 1.6s ease-in-out infinite}
+@keyframes pulseSoft{0%,100%{opacity:1}50%{opacity:.35}}
+.open-pulse{animation:openPulse 1.1s ease-in-out infinite}
+@keyframes openPulse{0%,100%{opacity:1}50%{opacity:.45}}
+.btn-active{transform:translateY(1px)}
+.progress-track{background:#0a0a0a;border:1px solid #262626}
+table tr{transition:background .15s}
+.divider-fade{height:1px;background:linear-gradient(90deg,transparent,#2a2a2e,transparent)}
+.regime-CALM{color:#a1a1aa}.regime-NORMAL{color:#e4e4e7}.regime-VOLATILE{color:#fff}.regime-TURBULENT{color:#fff;text-shadow:0 0 12px rgba(255,255,255,.5)}
+.kbd{border:1px solid #333;border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:10px;background:#111}
+</style>
 </head>
-<body class="min-h-screen flex flex-col bg-zinc-950 text-zinc-200 antialiased selection:bg-zinc-700 selection:text-white">
+<body class="min-h-screen">
 
-  <!-- TOP STATUS BANNER (RESEARCH NOTICE) -->
-  <header class="border-b border-subtle bg-zinc-900/90 backdrop-blur sticky top-0 z-50 px-4 py-2.5">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center space-x-3">
-        <div class="flex items-center space-x-2">
-          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" id="feedIndicator"></span>
-          <h1 class="text-xs sm:text-sm font-semibold tracking-wider uppercase text-zinc-100 flex items-center gap-2">
-            DERIV HIGHER/LOWER RESEARCH BOT 
-            <span class="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded border border-zinc-700 font-mono">v0.1</span>
-          </h1>
-        </div>
-        <div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30">
-          SIMULATION MODE — NO REAL TRADES
-        </div>
-      </div>
+<!-- HEADER -->
+<header class="sticky top-0 z-40 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-zinc-800">
+<div class="max-w-[1600px] mx-auto px-3 md:px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 border border-zinc-600 bg-gradient-to-b from-zinc-800 to-black flex items-center justify-center shrink-0 rounded-[8px]">
+<span class="mono text-[12px] font-bold tracking-tight text-white">ΔV</span>
+</div>
+<div>
+<h1 class="text-[12px] md:text-[13px] font-bold tracking-[0.18em] leading-none">DERIV HIGHER / LOWER — RESEARCH BOT</h1>
+<p class="mono text-[10px] tracking-[0.14em] text-zinc-500 mt-1">V0.1 &nbsp;·&nbsp; VOLATILITY 100 (1s) &nbsp;·&nbsp; PAPER ONLY &nbsp;·&nbsp; <span class="text-zinc-300">MARKETDATA / SIGNALENGINE / RISKMANAGER</span></p>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full lg:w-auto">
+<div class="flex items-center justify-center gap-2 mono text-[10px] tracking-[0.14em] border border-zinc-700 px-3 py-2 bg-zinc-900/80 rounded-[6px]">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse dot-live"></span>
+<span class="text-zinc-100 font-semibold">SIMULATION MODE — NO REAL TRADES</span>
+</div>
+<div class="flex items-center gap-1.5 justify-between">
+<button id="btnStart" class="mono bg-white text-black text-[11px] font-bold tracking-[0.14em] px-5 py-2.5 rounded-[6px] hover:bg-zinc-200 active:bg-zinc-300 transition flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.15)]"><span class="text-[10px]">▶</span> START</button>
+<button id="btnPause" class="mono bg-transparent border border-zinc-700 text-zinc-200 text-[11px] font-semibold tracking-[0.14em] px-4 py-2.5 rounded-[6px] hover:bg-zinc-900 hover:border-zinc-600 transition">PAUSE</button>
+<button id="btnReset" class="mono bg-transparent border border-zinc-700 text-zinc-400 text-[11px] font-semibold tracking-[0.14em] px-4 py-2.5 rounded-[6px] hover:bg-zinc-900 hover:text-zinc-200 transition">RESET</button>
+<button id="btnForceTrade" title="Force a virtual test trade to verify accounting (bypasses signal threshold)" class="mono bg-zinc-900 border border-dashed border-zinc-600 text-zinc-100 text-[11px] font-semibold tracking-[0.12em] px-3 py-2.5 rounded-[6px] hover:bg-zinc-800 hover:border-white transition">⚡ FORCE TEST</button>
+</div>
+</div>
+</div>
+<div class="border-t border-zinc-800/70 bg-[#0c0c0c] px-3 md:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 mono text-[9px] tracking-[0.16em] text-zinc-500 max-w-[1600px] mx-auto">
+<span>ARCHITECTED FOR DERIV WEBSOCKET — CURRENT SOURCE: <span class="text-white font-semibold">SIMULATED TICK FEED</span> <span class="hidden md:inline text-zinc-600">(swap MarketData source to Deriv `ticks:R_100` subscription)</span></span>
+<span class="hidden md:flex items-center gap-2"><span class="kbd mono">SPACE</span> START/PAUSE <span class="text-zinc-700">|</span> <span class="kbd mono">F</span> FORCE <span class="text-zinc-700">|</span> <span class="kbd mono">R</span> RESET</span>
+</div>
+</header>
 
-      <div class="flex items-center space-x-3 text-xs">
-        <div class="flex items-center space-x-1.5 bg-zinc-950 px-2.5 py-1 rounded border border-subtle font-mono text-zinc-400">
-          <span class="text-[11px] text-zinc-500">SPEED:</span>
-          <select id="simSpeed" class="bg-transparent text-zinc-200 focus:outline-none cursor-pointer">
-            <option value="1000">1.0s (Normal)</option>
-            <option value="500">0.5s (2x Fast)</option>
-            <option value="200">0.2s (5x Fast)</option>
-            <option value="50">0.05s (Turbo)</option>
-          </select>
-        </div>
+<main class="max-w-[1600px] mx-auto p-3 md:p-4 grid grid-cols-12 gap-3 md:gap-4">
 
-        <div class="flex items-center space-x-1">
-          <button id="btnStart" class="bg-zinc-200 hover:bg-white text-zinc-950 font-medium px-3 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm font-mono">
-            ▶ RUN
-          </button>
-          <button id="btnPause" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1 rounded text-xs transition font-mono border border-zinc-700">
-            ⏸ PAUSE
-          </button>
-          <button id="btnReset" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded text-xs transition font-mono border border-subtle">
-            ↺ RESET
-          </button>
-          <button id="btnSettings" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded text-xs transition border border-subtle">
-            ⚙ SETTINGS
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
+<!-- LEFT -->
+<div class="col-span-12 lg:col-span-3 space-y-3 md:space-y-4">
 
-  <!-- SAFETY ADVISORY CALLOUT -->
-  <section class="bg-zinc-900/40 border-b border-subtle py-1.5 px-4 text-center text-[11px] text-zinc-400">
-    <span class="font-semibold text-zinc-300">DEMO & QUANT RESEARCH ONLY:</span> Synthetic Volatility 100 (1s) tick-feed. No live broker execution or password storage. Past simulated performance never guarantees live trading outcomes.
-  </section>
+<!-- MARKET DATA -->
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold flex items-center gap-2"><span class="w-1.5 h-1.5 bg-white rounded-full dot-live"></span> MARKET DATA</h2>
+<span class="mono text-[9px] tracking-widest border border-zinc-700 bg-black px-2 py-1 rounded text-zinc-200">VOLATILITY 100 (1s) · R_100</span>
+</div>
+<div class="p-4 space-y-4">
+<div class="flex items-center justify-between">
+<span class="mono text-[10px] tracking-widest text-zinc-500">CONNECTION</span>
+<span id="elConnectionStatus" class="mono text-[10px] tracking-widest flex items-center gap-2 text-zinc-300"><span class="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block"></span> SIMULATED — PAUSED</span>
+</div>
+<div class="border border-zinc-800 bg-black rounded-lg p-4 relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent"></div>
+<div class="mono text-[9px] tracking-[0.18em] text-zinc-500 mb-1 flex justify-between"><span>CURRENT SIMULATED PRICE</span><span id="elPriceChange" class="text-zinc-400">+0.00</span></div>
+<div class="flex items-baseline gap-3">
+<div id="elPrice" class="mono text-[30px] md:text-[32px] font-semibold tracking-tight leading-none">5,000.00</div>
+<div id="elPriceDir" class="mono text-sm text-zinc-600">—</div>
+</div>
+<div id="elRegimeBadge" class="mono text-[10px] tracking-widest text-zinc-400 mt-2 flex items-center gap-2">REGIME: NORMAL • VOL 0.55</div>
+<div class="mt-2 h-1 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800"><div id="elVolMeterFill" class="h-full bg-gradient-to-r from-zinc-600 to-white transition-all duration-500" style="width:30%"></div></div>
+<div class="flex justify-between mono text-[8px] tracking-widest text-zinc-600 mt-1"><span>CALM</span><span>NORMAL</span><span>VOLATILE</span><span>TURBULENT</span></div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-black border border-zinc-800 rounded-lg p-3">
+<div class="mono text-[9px] tracking-[0.14em] text-zinc-500">TICKS COLLECTED</div>
+<div id="elTickCount" class="mono text-xl font-semibold mt-0.5">0</div>
+<div id="elTickSpeedLabel" class="mono text-[9px] text-zinc-600 mt-0.5">650MS / TICK</div>
+</div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3">
+<div class="mono text-[9px] tracking-[0.14em] text-zinc-500">TICK DIRECTION</div>
+<div id="elTickDirDetail" class="mono text-xl font-semibold mt-0.5">—</div>
+<div id="elTickTime" class="mono text-[9px] text-zinc-600 mt-0.5">--:--:--</div>
+</div>
+</div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3">
+<div class="flex justify-between mono text-[9px] tracking-[0.14em] mb-2"><span class="text-zinc-500">DIRECTIONAL PRESSURE (LAST 30)</span><span id="elPressureLabel" class="text-zinc-100 font-semibold">50% UP</span></div>
+<div class="h-2 bg-zinc-900 rounded-full overflow-hidden flex border border-zinc-800">
+<div id="elPressureUpFill" class="bg-white transition-all duration-300" style="width:50%"></div>
+<div id="elPressureDownFill" class="bg-zinc-700 transition-all duration-300" style="width:50%"></div>
+</div>
+<div class="flex justify-between mono text-[8px] tracking-widest text-zinc-600 mt-1"><span>▲ BULL PRESSURE</span><span>BEAR PRESSURE ▼</span></div>
+</div>
+<div class="flex items-center justify-between mono text-[10px] tracking-widest border-t border-zinc-800 pt-3">
+<span class="text-zinc-500">CURRENT SIGNAL</span>
+<span id="elMiniSignal" class="px-2 py-1 rounded border border-zinc-800 bg-black text-zinc-500 font-bold">WAIT</span>
+</div>
+<div>
+<div class="mono text-[9px] tracking-[0.16em] text-zinc-500 mb-1.5">TICK SPEED</div>
+<div class="grid grid-cols-3 gap-1.5">
+<button data-speed="350" class="speed-btn mono text-[10px] tracking-widest border border-zinc-800 bg-black px-2 py-1.5 rounded hover:border-zinc-500 transition text-zinc-400">FAST</button>
+<button data-speed="650" class="speed-btn mono text-[10px] tracking-widest border border-white bg-zinc-900 px-2 py-1.5 rounded transition text-white">NORMAL</button>
+<button data-speed="1200" class="speed-btn mono text-[10px] tracking-widest border border-zinc-800 bg-black px-2 py-1.5 rounded hover:border-zinc-500 transition text-zinc-400">SLOW</button>
+</div>
+</div>
+</div>
+</section>
 
-  <!-- MAIN WRAPPER -->
-  <main class="max-w-7xl mx-auto w-full p-3 sm:p-5 flex-1 flex flex-col gap-4">
+<!-- SIGNAL ENGINE -->
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">◈ SIGNAL ENGINE</h2>
+<span id="elThresholdDisplay" class="mono text-[10px] tracking-widest text-zinc-400 border border-zinc-700 bg-black px-2 py-1 rounded">THRESHOLD 70</span>
+</div>
+<div class="p-4">
+<div id="elSignalBox" class="border border-zinc-800 bg-black rounded-lg p-5 text-center transition-all duration-300">
+<div id="elSignalLabel" class="text-[26px] font-bold tracking-[0.16em] text-zinc-500">WAIT</div>
+<div id="elSignalSub" class="mono text-[10px] tracking-widest text-zinc-600 mt-1">NO TRADE CANDIDATE</div>
+<div id="elSignalDots" class="flex justify-center gap-1.5 mt-3">
+<span class="w-8 h-1 rounded-full bg-zinc-800"></span><span class="w-8 h-1 rounded-full bg-zinc-800"></span><span class="w-8 h-1 rounded-full bg-zinc-800"></span><span class="w-8 h-1 rounded-full bg-zinc-800"></span><span class="w-8 h-1 rounded-full bg-zinc-800"></span>
+</div>
+</div>
+<div class="mt-4 space-y-3">
+<div>
+<div class="flex justify-between mono text-[10px] tracking-widest mb-1.5"><span class="text-zinc-500">CONFIDENCE: 0–100</span><span id="elConfidenceValue" class="text-zinc-100 font-bold">0 / 100</span></div>
+<div class="h-2 bg-black border border-zinc-800 rounded-full overflow-hidden relative">
+<div id="elConfidenceBar" class="h-full conf-bar transition-all duration-300" style="width:0%"></div>
+<div id="elThresholdMarker" class="absolute top-0 bottom-0 w-[2px] bg-white/60" style="left:70%"></div>
+</div>
+<div class="flex justify-between mono text-[8px] text-zinc-600 mt-1"><span>0</span><span>THRESHOLD MARKER</span><span>100</span></div>
+</div>
+<div class="grid grid-cols-2 gap-2 mono text-[10px]">
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">MOMENTUM SCORE</div><div id="elMomentum" class="font-semibold text-sm mt-1 text-zinc-100">0.00</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">DIRECTIONAL RATIO</div><div id="elBias" class="font-semibold text-sm mt-1 text-zinc-100">50% UP</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">CONSECUTIVE / REVERSAL</div><div id="elConsecutive" class="font-semibold text-sm mt-1 text-zinc-100">0 × —</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">VOLATILITY / REGIME</div><div id="elVolStatus" class="font-semibold text-sm mt-1 text-zinc-100">NORMAL</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">DIST FROM MEAN (Z)</div><div id="elMeanDist" class="font-semibold text-sm mt-1 text-zinc-100">0.00σ</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="text-zinc-500 tracking-widest text-[8px]">TREND (SMA5/20)</div><div id="elTrendBadge" class="font-semibold text-sm mt-1 text-zinc-100">FLAT</div></div>
+</div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3">
+<div class="mono text-[9px] tracking-[0.16em] text-zinc-500 mb-1.5 flex justify-between"><span>EXPLANATION</span><span class="text-zinc-700">8-FACTOR MODEL</span></div>
+<div id="elExplanation" class="text-[11px] leading-relaxed text-zinc-300">Waiting for sufficient ticks to analyze. Need 30 ticks for modular scoring.</div>
+</div>
+<div class="grid grid-cols-3 gap-2 mono text-center text-[10px]">
+<div class="border border-zinc-800 bg-black rounded-lg py-2"><div class="text-[8px] text-zinc-500 tracking-widest">HIGHER</div><div id="elCountHigher" class="font-bold text-white">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg py-2"><div class="text-[8px] text-zinc-500 tracking-widest">WAIT</div><div id="elCountWait" class="font-bold text-zinc-400">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg py-2"><div class="text-[8px] text-zinc-500 tracking-widest">LOWER</div><div id="elCountLower" class="font-bold text-zinc-300">0</div></div>
+</div>
+</div>
+</div>
+</section>
+</div>
 
-    <!-- TOP GRID: MARKET FEED & CURRENT SIGNAL -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      
-      <!-- MARKET OVERVIEW PANEL (4 cols) -->
-      <div class="lg:col-span-4 bg-zinc-900/70 border border-subtle rounded-lg p-4 flex flex-col justify-between glow-subtle">
-        <div>
-          <div class="flex items-center justify-between pb-3 border-b border-subtle">
-            <div>
-              <span class="text-[10px] tracking-wider text-zinc-500 font-mono uppercase block">ASSET UNDER TEST</span>
-              <span class="font-bold text-sm sm:text-base text-zinc-100 flex items-center gap-1.5">
-                Volatility 100 (1s)
-                <span class="text-[9px] bg-zinc-800 text-zinc-400 px-1 py-0.5 rounded border border-subtle font-mono">SYNTHETIC</span>
-              </span>
-            </div>
-            <div class="text-right">
-              <span class="text-[10px] text-zinc-500 font-mono block">FEED STATUS</span>
-              <span id="marketStatusBadge" class="text-xs font-mono font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded inline-block">
-                STREAMING
-              </span>
-            </div>
-          </div>
+<!-- CENTER -->
+<div class="col-span-12 lg:col-span-6 space-y-3 md:space-y-4">
 
-          <!-- Price Display -->
-          <div class="py-4 flex items-baseline justify-between">
-            <div>
-              <div class="text-[11px] font-mono text-zinc-500 mb-0.5">CURRENT TICK PRICE</div>
-              <div id="currentPrice" class="text-3xl sm:text-4xl font-bold font-mono-numbers tracking-tight text-white">
-                1248.50
-              </div>
-            </div>
-            <div class="text-right">
-              <div id="priceDeltaBadge" class="font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-subtle">
-                <span id="priceDelta">+0.00</span>
-              </div>
-              <div id="priceDirectionLabel" class="text-[10px] font-mono text-zinc-500 mt-1 uppercase">FLAT</div>
-            </div>
-          </div>
-        </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2 bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">LIVE CHART — LAST 150 TICKS <span class="text-zinc-500 font-medium">· 5-TICK HIGHER/LOWER</span></h2>
+<div class="flex items-center gap-3 mono text-[9px] tracking-widest text-zinc-500">
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-zinc-700 border border-white inline-block"></span> ENTRY</span>
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-white rounded-full inline-block border border-white"></span> WIN</span>
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border border-zinc-400 inline-block"></span> LOSS</span>
+<span class="hidden sm:inline border border-zinc-800 px-1.5 py-0.5 rounded bg-black">HOVER FOR INSPECT</span>
+</div>
+</div>
+<div class="p-3">
+<div class="bg-black border border-zinc-800 rounded-lg overflow-hidden relative">
+<canvas id="elChartCanvas" class="w-full block cursor-crosshair" style="height:300px"></canvas>
+<div id="elChartTip" class="absolute hidden mono text-[10px] bg-zinc-900 border border-zinc-600 px-2 py-1 rounded pointer-events-none whitespace-nowrap z-10"></div>
+</div>
+<div class="flex flex-wrap justify-between gap-2 mono text-[10px] tracking-widest text-zinc-500 mt-2">
+<span id="elChartInfo">0 TICKS PLOTTED • RANGE —</span>
+<span>≈ 100–200 VISIBLE • MARKS: VIRTUAL ENTRIES</span>
+</div>
+<div id="elOpenTradesStrip" class="mt-2 flex flex-wrap gap-2"></div>
+</div>
+</section>
 
-        <!-- Quick Market Ticker Stats -->
-        <div class="grid grid-cols-3 gap-2 pt-3 border-t border-subtle text-[11px] font-mono">
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-zinc-500 text-[10px] block">TOTAL TICKS</span>
-            <span id="totalTicksCount" class="font-semibold text-zinc-200">0</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-zinc-500 text-[10px] block">MARKET REGIME</span>
-            <span id="marketRegime" class="font-semibold text-zinc-300 truncate block">Choppy</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-zinc-500 text-[10px] block">TICK VOLATILITY</span>
-            <span id="tickVolatility" class="font-semibold text-zinc-300">0.45 pt</span>
-          </div>
-        </div>
-      </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">PAPER TRADING — PERFORMANCE</h2>
+<span class="mono text-[9px] tracking-widest bg-white text-black px-2 py-1 rounded font-bold">VIRTUAL · FIXED STAKE · NO MARTINGALE</span>
+</div>
+<div class="p-4 space-y-4">
+<div class="bg-black border border-zinc-800 rounded-lg p-3">
+<div class="flex justify-between mono text-[9px] tracking-[0.14em] text-zinc-500 mb-2"><span>EQUITY CURVE (BALANCE HISTORY)</span><span id="elEquityLabel" class="text-zinc-300">$10,000.00</span></div>
+<canvas id="elEquityCanvas" class="w-full block" style="height:64px"></canvas>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="mono text-[9px] tracking-[0.14em] text-zinc-500">STARTING BALANCE</div><div id="elStartBalance" class="mono text-base font-medium mt-1">$10,000.00</div></div>
+<div class="bg-white text-black rounded-lg p-3 relative overflow-hidden"><div class="mono text-[9px] tracking-[0.14em] opacity-60 font-semibold">CURRENT BALANCE</div><div id="elCurrentBalance" class="mono text-base font-bold mt-1">$10,000.00</div></div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="mono text-[9px] tracking-[0.14em] text-zinc-500">TOTAL P/L</div><div id="elTotalPL" class="mono text-base font-medium mt-1">$0.00</div><div id="elTotalPLPct" class="mono text-[10px] text-zinc-500">0.00%</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="mono text-[9px] tracking-[0.14em] text-zinc-500">TRADES</div><div id="elTotalTrades" class="mono text-xl font-semibold mt-1">0</div><div id="elOpenCountLabel" class="mono text-[9px] text-zinc-500">0 OPEN</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="mono text-[9px] tracking-[0.14em] text-zinc-500">WIN RATE</div><div id="elWinRate" class="mono text-xl font-semibold mt-1">—</div><div id="elWinRateBar" class="h-1 bg-zinc-900 rounded-full mt-1.5 overflow-hidden"><div class="h-full bg-white" style="width:0%"></div></div></div>
+</div>
+<div class="grid grid-cols-4 gap-2 mono text-[10px]">
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5 text-center"><div class="text-zinc-500 tracking-widest text-[9px]">WINS</div><div id="elWins" class="font-bold text-base mt-1 text-white">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5 text-center"><div class="text-zinc-500 tracking-widest text-[9px]">LOSSES</div><div id="elLosses" class="font-bold text-base mt-1 text-zinc-400">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5 text-center"><div class="text-zinc-500 tracking-widest text-[9px]">AVG WIN</div><div id="elAvgWin" class="font-medium text-xs mt-1.5">$0.00</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-2.5 text-center"><div class="text-zinc-500 tracking-widest text-[9px]">AVG LOSS</div><div id="elAvgLoss" class="font-medium text-xs mt-1.5">$0.00</div></div>
+</div>
+<div class="grid grid-cols-2 gap-2 mono text-[10px]">
+<div class="border border-zinc-800 bg-black rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-500">EXPECTED VALUE / TRADE</span><span id="elEV" class="font-semibold">$0.00</span></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-500">PROFIT FACTOR</span><span id="elProfitFactor" class="font-semibold">—</span></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-500">WIN STREAK</span><span id="elCurrWinStreak" class="font-bold">0</span></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-500">LOSS STREAK</span><span id="elCurrLossStreak" class="font-bold">0</span></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-500">MAX LOSS STREAK</span><span id="elMaxLossStreak" class="font-semibold">0</span></div>
+<div class="border border-zinc-700 bg-zinc-900 rounded-lg p-3 flex justify-between items-center"><span class="text-zinc-400">MAX DRAWDOWN</span><span id="elMaxDrawdown" class="font-bold text-white">$0.00</span></div>
+</div>
+<div class="space-y-2 pt-1">
+<div>
+<div class="flex justify-between mono text-[9px] tracking-widest text-zinc-500 mb-1"><span>SESSION TRADES USED</span><span id="elTradeProgressLabel">0 / 100</span></div>
+<div class="h-1.5 progress-track rounded-full overflow-hidden"><div id="elTradeProgressFill" class="h-full bg-zinc-300 transition-all" style="width:0%"></div></div>
+</div>
+<div>
+<div class="flex justify-between mono text-[9px] tracking-widest text-zinc-500 mb-1"><span>DRAWDOWN USED</span><span id="elDDProgressLabel">$0 / $500</span></div>
+<div class="h-1.5 progress-track rounded-full overflow-hidden"><div id="elDDProgressFill" class="h-full bg-zinc-500 transition-all" style="width:0%"></div></div>
+</div>
+</div>
+</div>
+</section>
 
-      <!-- SIGNAL ENGINE PANEL (8 cols) -->
-      <div class="lg:col-span-8 bg-zinc-900/70 border border-subtle rounded-lg p-4 flex flex-col justify-between glow-subtle">
-        <div>
-          <div class="flex items-center justify-between pb-3 border-b border-subtle">
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] tracking-wider text-zinc-500 font-mono uppercase">QUANTITATIVE SIGNAL ENGINE</span>
-              <span class="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">MULTI-FACTOR V0.1</span>
-            </div>
-            <div class="flex items-center gap-2 font-mono text-xs">
-              <span class="text-zinc-500">TRIGGER THRESHOLD:</span>
-              <span id="activeThresholdDisplay" class="font-bold text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded border border-subtle">70%</span>
-            </div>
-          </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">STRATEGY ANALYSIS</h2>
+<p class="mono text-[9px] tracking-widest text-zinc-500 mt-1">SEPARATION: SIGNAL ACCURACY <span class="text-zinc-700">vs</span> PAPER-TRADE PROFITABILITY <span class="text-zinc-600">(5-TICK FORWARD)</span></p>
+</div>
+<div class="p-4 space-y-4">
+<div>
+<div class="mono text-[9px] tracking-[0.16em] text-zinc-400 mb-2 flex items-center gap-2"><span class="w-4 h-px bg-white"></span> SIGNAL-LEVEL METRICS — INDEPENDENT OF RISK FILTER</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mono text-[10px]">
+<div class="border border-white/30 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">OVERALL SIGNAL ACC</div><div id="elAnalySignalAcc" class="font-bold text-sm mt-1 text-white">—</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">WAIT FREQUENCY</div><div id="elAnalyWaitFreq" class="font-semibold text-sm mt-1">0%</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">HIGHER ACCURACY</div><div id="elAnalyHigherAcc" class="font-semibold text-sm mt-1">—</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">LOWER ACCURACY</div><div id="elAnalyLowerAcc" class="font-semibold text-sm mt-1">—</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]"># SIGNALS</div><div id="elAnalyNumSignals" class="font-semibold text-sm mt-1">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">HIGHER / LOWER / WAIT</div><div id="elAnalyHlw" class="font-medium text-[11px] mt-1">0 / 0 / 0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">RESOLVED SIGNALS</div><div id="elAnalyResolved" class="font-medium text-sm mt-1">0</div></div>
+<div class="border border-zinc-800 bg-black rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">EDGE vs 50%</div><div id="elAnalyEdge" class="font-semibold text-sm mt-1">—</div></div>
+</div>
+</div>
+<div class="divider-fade"></div>
+<div>
+<div class="mono text-[9px] tracking-[0.16em] text-zinc-400 mb-2 flex items-center gap-2"><span class="w-4 h-px bg-zinc-600"></span> TRADE-LEVEL METRICS — AFTER RISK FILTER · FIXED STAKE · 80% PAYOUT</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mono text-[10px]">
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">WIN RATE (TRADES)</div><div id="elAnalyWinRate" class="font-bold text-sm mt-1">—</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">EXPECTED VALUE</div><div id="elAnalyEV" class="font-bold text-sm mt-1">$0.00</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">PROFIT FACTOR</div><div id="elAnalyProfitFactor" class="font-bold text-sm mt-1">—</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]"># TRADES</div><div id="elAnalyNumTrades" class="font-bold text-sm mt-1">0</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">AVG WIN</div><div id="elAnalyAvgWin" class="font-medium text-xs mt-1">$0.00</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">AVG LOSS</div><div id="elAnalyAvgLoss" class="font-medium text-xs mt-1">$0.00</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">MAX DRAWDOWN</div><div id="elAnalyMaxDD" class="font-medium text-xs mt-1">$0.00</div></div>
+<div class="bg-black border border-zinc-800 rounded-lg p-3"><div class="text-zinc-500 text-[8px] tracking-[0.14em]">MAX LOSING STREAK</div><div id="elAnalyMaxStreak" class="font-medium text-xs mt-1">0</div></div>
+</div>
+</div>
+<p class="mono text-[10px] leading-relaxed text-zinc-500 border-t border-zinc-800 pt-3">Signal accuracy evaluates every HIGHER/LOWER candidate 5 ticks forward, independent of RiskManager. Paper-trade profitability reflects filtering, fixed stake <span id="elAnalyStakeNote">$10</span> and assumed payout. Positive EV requires win rate above breakeven <span id="elBreakeven" class="text-zinc-300">55.6%</span> at current payout.</p>
+</div>
+</section>
+</div>
 
-          <!-- Main Signal Indicator Row -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 py-3 items-center">
-            
-            <!-- Signal Box -->
-            <div class="md:col-span-5 flex flex-col items-center justify-center p-3.5 rounded-lg bg-zinc-950 border border-subtle text-center">
-              <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">RECOMMENDED ACTION</span>
-              <div id="signalBadge" class="text-3xl font-extrabold font-mono tracking-wider text-zinc-400 py-1">
-                WAIT
-              </div>
-              <div class="w-full bg-zinc-850 h-1.5 rounded-full mt-2 overflow-hidden border border-subtle">
-                <div id="confidenceBar" class="h-full bg-zinc-400 transition-all duration-300" style="width: 25%"></div>
-              </div>
-              <div class="flex justify-between w-full text-[10px] font-mono text-zinc-400 mt-1">
-                <span>CONFIDENCE SCORE</span>
-                <span id="confidenceValue" class="font-bold text-zinc-200">25 / 100</span>
-              </div>
-            </div>
+<!-- RIGHT -->
+<div class="col-span-12 lg:col-span-3 space-y-3 md:space-y-4">
 
-            <!-- Signal Micro Metrics -->
-            <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-              <div class="bg-zinc-950/70 p-2 rounded border border-subtle">
-                <span class="text-zinc-500 text-[10px] block">MOMENTUM</span>
-                <span id="sigMomentum" class="font-medium text-zinc-300">0.00%</span>
-              </div>
-              <div class="bg-zinc-950/70 p-2 rounded border border-subtle">
-                <span class="text-zinc-500 text-[10px] block">DIRECTION BIAS</span>
-                <span id="sigBias" class="font-medium text-zinc-300">50% Bull</span>
-              </div>
-              <div class="bg-zinc-950/70 p-2 rounded border border-subtle">
-                <span class="text-zinc-500 text-[10px] block">CONSEC. TICKS</span>
-                <span id="sigConsecutive" class="font-medium text-zinc-300">0</span>
-              </div>
-              <div class="bg-zinc-950/70 p-2 rounded border border-subtle">
-                <span class="text-zinc-500 text-[10px] block">REVERSAL BIAS</span>
-                <span id="sigMeanRev" class="font-medium text-zinc-300">Neutral</span>
-              </div>
-              <div class="col-span-2 sm:col-span-4 bg-zinc-950/40 p-2 rounded border border-subtle text-[11px] text-zinc-400">
-                <span class="text-zinc-500 font-semibold block text-[10px] uppercase">RATIONALE / EXPLANATION</span>
-                <span id="signalExplanation" class="text-zinc-300 leading-snug">Collecting historical ticks for baseline computation...</span>
-              </div>
-            </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">OPEN POSITIONS <span class="text-zinc-500">· 5-TICK</span></h2>
+<span id="elOpenCount" class="mono text-[10px] tracking-widest border border-zinc-700 bg-black px-2 py-1 rounded">0 OPEN</span>
+</div>
+<div id="elOpenPositions" class="p-3 space-y-2 max-h-[180px] overflow-auto">
+<div class="mono text-[10px] tracking-widest text-zinc-600 text-center py-6">NO OPEN VIRTUAL TRADES</div>
+</div>
+</section>
 
-          </div>
-        </div>
+<section class="panel rounded-[10px] overflow-hidden flex flex-col">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">TRADE HISTORY</h2>
+<div class="flex items-center gap-2">
+<button id="btnExportCSV" class="mono text-[9px] tracking-widest border border-zinc-700 px-2 py-1 rounded hover:bg-zinc-900 transition text-zinc-300">EXPORT CSV</button>
+<span id="elHistoryCount" class="mono text-[10px] tracking-widest border border-zinc-800 bg-black px-2 py-1 rounded">0 TRADES</span>
+</div>
+</div>
+<div class="overflow-auto max-h-[360px]">
+<table class="w-full mono text-[11px]">
+<thead class="sticky top-0 bg-[#131313] border-b border-zinc-800 text-zinc-500 tracking-widest text-[9px] z-10">
+<tr><th class="text-left px-3 py-2 font-medium">TIME</th><th class="text-left px-2 py-2 font-medium">DIR</th><th class="text-left px-2 py-2 font-medium">CONF</th><th class="text-left px-2 py-2 font-medium">ENTRY</th><th class="text-left px-2 py-2 font-medium">RESULT</th><th class="text-right px-3 py-2 font-medium">P/L</th><th class="text-center px-2 py-2 font-medium">STRK</th></tr>
+</thead>
+<tbody id="elTradeHistoryBody" class="divide-y divide-zinc-800/50">
+<tr><td colspan="7" class="px-4 py-10 text-center text-zinc-500 text-xs tracking-widest">NO TRADES YET — PRESS START<br><span class="text-[10px] text-zinc-600">OR USE ⚡ FORCE TEST</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
 
-        <!-- Risk State Row -->
-        <div class="pt-2 border-t border-subtle flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-zinc-400">
-          <div class="flex items-center gap-2">
-            <span class="text-zinc-500">RISK CONTROLLER:</span>
-            <span id="riskStatusPill" class="text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded border border-subtle">ACTIVE / READY</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span>COOLDOWN: <strong id="cooldownTicksLeft" class="text-zinc-300 font-mono">0 ticks</strong></span>
-            <span>AUTO-EXECUTE: 
-              <button id="toggleAutoTrade" class="text-[10px] px-2 py-0.5 rounded border border-zinc-600 bg-zinc-800 hover:bg-zinc-700 text-zinc-200">
-                ENABLED (PAPER)
-              </button>
-            </span>
-          </div>
-        </div>
-      </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">RISK MANAGER <span class="text-zinc-500 font-medium">· CONSERVATIVE</span></h2>
+</div>
+<div class="p-4 space-y-3 mono text-[11px]">
+<div id="elRiskStatus" class="border border-zinc-800 bg-black rounded-lg p-3 text-zinc-300 leading-relaxed text-[11px]">Ready. Awaiting high-confidence signal.</div>
+<div class="grid grid-cols-2 gap-2 text-[10px]">
+<div class="border border-zinc-800 rounded-lg p-2.5 flex justify-between bg-black"><span class="text-zinc-500">COOLDOWN</span><span id="elCooldownDisplay" class="font-semibold">—</span></div>
+<div class="border border-zinc-800 rounded-lg p-2.5 flex justify-between bg-black"><span class="text-zinc-500">REMAINING</span><span id="elTradesRemaining" class="font-semibold">100</span></div>
+<div class="border border-zinc-800 rounded-lg p-2.5 flex justify-between bg-black"><span class="text-zinc-500">STAKE</span><span id="elRiskStake" class="font-semibold">FIXED $10</span></div>
+<div class="border border-zinc-800 rounded-lg p-2.5 flex justify-between bg-black"><span class="text-zinc-500">HALT</span><span id="elHaltDisplay" class="font-semibold text-zinc-400">NO</span></div>
+</div>
+<div class="mono text-[9px] tracking-widest text-zinc-500 border border-dashed border-zinc-800 rounded-lg p-2.5 bg-black/50 leading-relaxed">FIXED STAKE ONLY • NO MARTINGALE • SESSION LIMITS • COOLDOWN AFTER STREAK • DRAWDOWN HALT</div>
+</div>
+</section>
 
-    </div>
+<section class="panel rounded-[10px] overflow-hidden">
+<div class="px-4 py-3 border-b border-zinc-800 flex items-center justify-between bg-white/[0.02]">
+<h2 class="text-[10px] tracking-[0.18em] font-bold">CONFIGURATION</h2>
+<button id="btnResetDefaults" class="mono text-[9px] tracking-widest border border-zinc-700 px-2.5 py-1.5 rounded hover:bg-zinc-900 hover:border-zinc-500 transition text-zinc-300">RESET DEFAULTS</button>
+</div>
+<div class="p-4 space-y-3">
+<div class="grid grid-cols-2 gap-2.5">
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">STARTING BALANCE</span><input id="inpStartingBalance" type="number" value="10000" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs focus:border-zinc-500"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">VIRTUAL STAKE ($)</span><input id="inpStake" type="number" value="10" min="1" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">ASSUMED PAYOUT %</span><input id="inpPayout" type="number" value="80" min="1" max="200" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">SIGNAL THRESHOLD</span><input id="inpThreshold" type="number" value="70" min="50" max="95" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">MAX TRADES / SESSION</span><input id="inpMaxTrades" type="number" value="100" min="1" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">MAX CONSEC LOSSES</span><input id="inpMaxLosses" type="number" value="3" min="1" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">MAX DRAWDOWN ($)</span><input id="inpMaxDrawdown" type="number" value="500" min="10" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">COOLDOWN (TICKS)</span><input id="inpCooldown" type="number" value="10" min="0" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+</div>
+<label class="space-y-1 block"><span class="mono text-[8px] tracking-[0.14em] text-zinc-500">TICKS FOR ANALYSIS (LOOKBACK WINDOW)</span><input id="inpLookback" type="number" value="30" min="8" max="120" class="mono w-full bg-black border border-zinc-800 rounded-lg px-2.5 py-2 text-xs"></label>
+<p class="mono text-[10px] leading-relaxed text-zinc-500 border-t border-zinc-800 pt-3">Changes apply immediately. Starting balance applies on next RESET when no open trades. Deriv WebSocket can replace simulated feed without touching SignalEngine.</p>
+</div>
+</section>
+</div>
+</main>
 
-    <!-- LIVE INTERACTIVE TICK CHART -->
-    <div class="bg-zinc-900/70 border border-subtle rounded-lg p-4 glow-subtle">
-      <div class="flex flex-wrap items-center justify-between pb-3 mb-2 border-b border-subtle gap-2">
-        <div class="flex items-center space-x-2">
-          <h2 class="text-xs font-semibold tracking-wider text-zinc-300 uppercase font-mono">REAL-TIME TICK STREAM (LAST 150 TICKS)</h2>
-          <span class="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono">5-Tick Contract Evaluation</span>
-        </div>
-        <div class="flex items-center space-x-4 text-[11px] font-mono text-zinc-400">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-zinc-100 inline-block"></span>
-            <span>Price Path</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block"></span>
-            <span>Trade Entry</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-            <span>Win</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>
-            <span>Loss</span>
-          </div>
-        </div>
-      </div>
+<footer class="max-w-[1600px] mx-auto px-3 md:px-4 pb-8">
+<div class="panel rounded-[10px] p-4 md:p-5">
+<div class="mono text-[10px] tracking-[0.18em] text-zinc-400 mb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-white rounded-full"></span> SAFETY & DISCLAIMER — RESEARCH ONLY</div>
+<p class="text-[11px] leading-relaxed text-zinc-400">This is a research and paper-trading simulator only. <span class="text-white font-semibold">No real-money orders are sent.</span> No Deriv API connection is active, no account passwords are requested or stored, and no automatic real-money execution is implemented. Synthetic ticks are used for demonstration — they simulate regime shifts, trends and jumps, not a smooth random walk. Historical or simulated performance does not guarantee future results. Volatility 100 (1s) is a synthetic index; any strategy requires extensive out-of-sample testing. Use for education and research only.</p>
+<div class="flex flex-wrap gap-2 mt-3 mono text-[9px] tracking-widest">
+<span class="border border-zinc-700 px-2.5 py-1.5 bg-black rounded text-zinc-200">NO REAL TRADES</span>
+<span class="border border-zinc-800 px-2.5 py-1.5 bg-black rounded text-zinc-400">DEMO / RESEARCH ONLY</span>
+<span class="border border-zinc-800 px-2.5 py-1.5 bg-black rounded text-zinc-400">ARCHITECTED FOR WS FEED</span>
+<span class="border border-zinc-800 px-2.5 py-1.5 bg-black rounded text-zinc-400">NO MARTINGALE</span>
+<span class="border border-zinc-800 px-2.5 py-1.5 bg-black rounded text-zinc-400">NO CREDENTIALS STORED</span>
+<span class="border border-zinc-800 px-2.5 py-1.5 bg-black rounded text-zinc-400">FIXED STAKE</span>
+</div>
+</div>
+<div class="text-center mono text-[9px] tracking-[0.18em] text-zinc-600 mt-3 leading-relaxed">DERIV HIGHER / LOWER RESEARCH BOT — V0.1 • MARKETDATA / SIGNALENGINE / RISKMANAGER / PAPER TRADING ENGINE / STATISTICSENGINE • MONOCHROME TERMINAL</div>
+</footer>
 
-      <div class="relative w-full h-64 sm:h-72 bg-zinc-950/80 rounded border border-subtle overflow-hidden">
-        <canvas id="tickCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-        <div id="chartTooltip" class="absolute hidden bg-zinc-900 border border-zinc-700 text-[10px] font-mono px-2 py-1 rounded shadow-lg pointer-events-none z-10 text-zinc-200">
-          Price: 0.00
-        </div>
-      </div>
-    </div>
+<div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2 w-[300px] max-w-[calc(100vw-2rem)]"></div>
 
-    <!-- STATS DASHBOARD: 2-COLUMN SPLIT (PAPER TRADING STATS & STRATEGY ANALYSIS) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      
-      <!-- PAPER TRADING FINANCIAL PERFORMANCE -->
-      <div class="bg-zinc-900/70 border border-subtle rounded-lg p-4 glow-subtle">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-subtle">
-          <h3 class="text-xs font-semibold tracking-wider text-zinc-200 uppercase font-mono">PAPER TRADING ACCOUNT METRICS</h3>
-          <span class="text-[10px] text-zinc-500 font-mono">VIRTUAL SIMULATION</span>
-        </div>
+<script>
+// ============================================================================
+// DERIV HIGHER/LOWER RESEARCH BOT V0.1 — PAPER TRADING / RESEARCH ONLY
+// Modules: MarketData | SignalEngine | RiskManager | PaperTradingEngine |
+//          StatisticsEngine | Chart | TradeHistory | Settings
+// MarketData is replaceable with Deriv WebSocket without touching SignalEngine.
+// NO real orders. NO credentials. Simulated ticks only.
+// ============================================================================
 
-        <!-- Balance Highlights -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 font-mono">
-          <div class="bg-zinc-950 p-2.5 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 uppercase block">CURRENT BALANCE</span>
-            <span id="statBalance" class="text-lg font-bold text-zinc-100">$10,000.00</span>
-          </div>
-          <div class="bg-zinc-950 p-2.5 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 uppercase block">TOTAL VIRTUAL P/L</span>
-            <span id="statTotalPL" class="text-lg font-bold text-zinc-400">$0.00</span>
-          </div>
-          <div class="bg-zinc-950 p-2.5 rounded border border-subtle col-span-2 sm:col-span-1">
-            <span class="text-[10px] text-zinc-500 uppercase block">MAX DRAWDOWN</span>
-            <span id="statMaxDD" class="text-lg font-bold text-zinc-300">0.00%</span>
-          </div>
-        </div>
+const DEFAULTS = { startingBalance:10000, stake:10, payout:0.80, threshold:70, maxTrades:100, maxConsecLosses:3, maxDrawdown:500, cooldownDuration:10, lookback:30, tickSpeed:650 };
+const SETTLE_TICKS = 5;
 
-        <!-- Detailed Stat Matrix -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">EXECUTED TRADES</span>
-            <span id="statTradesCount" class="font-semibold text-zinc-200">0</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">WINS / LOSSES</span>
-            <span id="statWinLoss" class="font-semibold text-zinc-200">0 / 0</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">PAPER WIN RATE</span>
-            <span id="statWinRate" class="font-semibold text-zinc-200">0.0%</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">PROFIT FACTOR</span>
-            <span id="statProfitFactor" class="font-semibold text-zinc-200">0.00</span>
-          </div>
+let state = {
+  ticks:[], price:5000, prevPrice:5000, tickCount:0, isRunning:false, intervalId:null, tickSpeed:DEFAULTS.tickSpeed,
+  balance:DEFAULTS.startingBalance, startingBalance:DEFAULTS.startingBalance,
+  stake:DEFAULTS.stake, payout:DEFAULTS.payout, threshold:DEFAULTS.threshold,
+  maxTrades:DEFAULTS.maxTrades, maxConsecLosses:DEFAULTS.maxConsecLosses,
+  maxDrawdown:DEFAULTS.maxDrawdown, cooldownDuration:DEFAULTS.cooldownDuration, lookback:DEFAULTS.lookback,
+  trades:[], openTrades:[], signals:[], pendingSignals:[], balanceHistory:[DEFAULTS.startingBalance],
+  peakBalance:DEFAULTS.startingBalance, maxDrawdownActual:0,
+  currentWinStreak:0, currentLossStreak:0, maxLosingStreak:0, maxWinningStreak:0,
+  cooldownRemaining:0, isHalted:false, haltReason:'', trend:0, regime:'NORMAL', volatility:0.55, lastSignal:null, forceDirToggle:1
+};
 
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">AVG WIN</span>
-            <span id="statAvgWin" class="font-semibold text-zinc-200">$0.00</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">AVG LOSS</span>
-            <span id="statAvgLoss" class="font-semibold text-zinc-200">$0.00</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">EXPECTED VALUE</span>
-            <span id="statEV" class="font-semibold text-zinc-200">$0.00</span>
-          </div>
-          <div class="bg-zinc-950/60 p-2 rounded border border-subtle">
-            <span class="text-[10px] text-zinc-500 block">CURRENT STREAK</span>
-            <span id="statCurrentStreak" class="font-semibold text-zinc-200">-</span>
-          </div>
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function sma(a){if(!a.length)return 0;return a.reduce((s,x)=>s+x,0)/a.length;}
+function stddev(a){if(a.length<2)return 0;const m=sma(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1));}
+function formatPrice(p){return p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function formatMoney(n){const s=n<0?'-':'';const a=Math.abs(n);return s+'$'+a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function formatMoneySigned(n){return (n>=0?'+':'')+formatMoney(n);}
+function toast(msg, sub, tone){
+  const c=$('toastContainer'); if(!c) return;
+  const el=document.createElement('div');
+  const border = tone==='win' ? 'border-white' : tone==='loss' ? 'border-zinc-600' : 'border-zinc-700';
+  const bg = tone==='win' ? 'bg-white text-black' : 'bg-[#141414] text-zinc-200';
+  el.className=`toast-in border ${border} ${bg} rounded-lg px-3 py-2.5 shadow-2xl`;
+  el.innerHTML=`<div class="mono text-[11px] font-bold tracking-widest">${msg}</div>${sub?`<div class="mono text-[10px] opacity-70 mt-0.5">${sub}</div>`:''}`;
+  c.appendChild(el);
+  setTimeout(()=>{el.style.transition='all .3s';el.style.opacity='0';el.style.transform='translateX(20px)';setTimeout(()=>el.remove(),320);},2600);
+  while(c.children.length>4) c.firstChild.remove();
+}
 
-          <div class="col-span-2 bg-zinc-950/60 p-2 rounded border border-subtle flex justify-between items-center">
-            <span class="text-[10px] text-zinc-500">MAX CONSECUTIVE LOSSES</span>
-            <span id="statMaxLosingStreak" class="font-bold text-zinc-200">0</span>
-          </div>
-          <div class="col-span-2 bg-zinc-950/60 p-2 rounded border border-subtle flex justify-between items-center">
-            <span class="text-[10px] text-zinc-500">SESSION START BALANCE</span>
-            <span id="statStartBalance" class="font-medium text-zinc-400">$10,000.00</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- STRATEGY ANALYSIS (THEORETICAL ACCURACY VS ACTUAL EXECUTION) -->
-      <div class="bg-zinc-900/70 border border-subtle rounded-lg p-4 glow-subtle flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between pb-3 mb-3 border-b border-subtle">
-            <h3 class="text-xs font-semibold tracking-wider text-zinc-200 uppercase font-mono">STRATEGY ANALYSIS</h3>
-            <span class="text-[10px] text-zinc-500 font-mono">ACCURACY ISOLATION</span>
-          </div>
-
-          <p class="text-[11px] text-zinc-400 mb-3 leading-relaxed">
-            Measures predictive validity separate from stake execution constraints and drawdown cooldown stops.
-          </p>
-
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 font-mono text-xs mb-3">
-            <div class="bg-zinc-950 p-2 rounded border border-subtle">
-              <span class="text-[10px] text-zinc-500 block">SIGNAL ACCURACY</span>
-              <span id="analysisSignalAcc" class="text-base font-bold text-zinc-200">0.0%</span>
-              <span class="text-[9px] text-zinc-500 block">All completed signals</span>
-            </div>
-            <div class="bg-zinc-950 p-2 rounded border border-subtle">
-              <span class="text-[10px] text-zinc-500 block">HIGHER ACCURACY</span>
-              <span id="analysisHigherAcc" class="text-base font-bold text-zinc-200">0.0%</span>
-              <span class="text-[9px] text-zinc-500 block" id="analysisHigherCount">0 / 0 calls</span>
-            </div>
-            <div class="bg-zinc-950 p-2 rounded border border-subtle">
-              <span class="text-[10px] text-zinc-500 block">LOWER ACCURACY</span>
-              <span id="analysisLowerAcc" class="text-base font-bold text-zinc-200">0.0%</span>
-              <span class="text-[9px] text-zinc-500 block" id="analysisLowerCount">0 / 0 calls</span>
-            </div>
-          </div>
-
-          <div class="space-y-2 text-xs font-mono">
-            <div class="flex justify-between items-center p-2 rounded bg-zinc-950/60 border border-subtle">
-              <span class="text-zinc-400 text-[11px]">SIGNAL DISTRIBUTION (WAIT FREQUENCY):</span>
-              <span id="analysisWaitFreq" class="font-semibold text-zinc-300">100.0%</span>
-            </div>
-            <div class="flex justify-between items-center p-2 rounded bg-zinc-950/60 border border-subtle">
-              <span class="text-zinc-400 text-[11px]">THEORETICAL EDGE (ASSUMING 80% PAYOUT):</span>
-              <span id="analysisEdge" class="font-semibold text-zinc-300">-</span>
-            </div>
-            <div class="flex justify-between items-center p-2 rounded bg-zinc-950/60 border border-subtle">
-              <span class="text-zinc-400 text-[11px]">FILTER REJECTION RATE (RISK GATES):</span>
-              <span id="analysisRiskFilters" class="font-semibold text-zinc-300">0 calls blocked</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-4 pt-2 border-t border-subtle text-[10px] font-mono text-zinc-500 flex justify-between items-center">
-          <span>Formula: Break-even winrate @ 80% payout = 55.56%</span>
-          <span id="breakevenStatus" class="text-zinc-400">STATUS: N/A</span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- TRADE HISTORY TABLE -->
-    <div class="bg-zinc-900/70 border border-subtle rounded-lg p-4 glow-subtle">
-      <div class="flex items-center justify-between pb-3 mb-2 border-b border-subtle">
-        <div class="flex items-center space-x-2">
-          <h3 class="text-xs font-semibold tracking-wider text-zinc-200 uppercase font-mono">VIRTUAL TRADE LOG</h3>
-          <span class="text-[10px] text-zinc-500 font-mono">(LATEST 50 ENTRIES)</span>
-        </div>
-        <div class="text-[11px] font-mono text-zinc-400">
-          Showing: <span id="loggedTradesCount" class="font-bold text-zinc-200">0</span> trades
-        </div>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs font-mono border-collapse">
-          <thead>
-            <tr class="text-[10px] text-zinc-500 border-b border-subtle uppercase">
-              <th class="py-2 px-3">Time</th>
-              <th class="py-2 px-3">Direction</th>
-              <th class="py-2 px-3 text-right">Confidence</th>
-              <th class="py-2 px-3 text-right">Entry Price</th>
-              <th class="py-2 px-3 text-right">Exit Price</th>
-              <th class="py-2 px-3 text-center">Outcome</th>
-              <th class="py-2 px-3 text-right">P/L ($)</th>
-              <th class="py-2 px-3 text-right">Streak</th>
-            </tr>
-          </thead>
-          <tbody id="tradeHistoryBody" class="divide-y divide-subtle/50 text-zinc-300">
-            <tr>
-              <td colspan="8" class="text-center py-8 text-zinc-600 text-xs">No paper trades recorded yet. Start simulation or click Step.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="border-t border-subtle py-3 px-4 text-center text-xs text-zinc-600 font-mono">
-    DERIV VOLATILITY 100 (1S) QUANTITATIVE RESEARCH TERMINAL • ARCHITECTURE READY FOR DERIV WEBSOCKET MARKET-DATA
-  </footer>
-
-  <!-- CONFIGURATION MODAL (DRAWER / OVERLAY) -->
-  <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-zinc-900 border border-zinc-700 w-full max-w-lg rounded-xl shadow-2xl p-6 font-mono text-xs">
-      <div class="flex items-center justify-between pb-3 border-b border-subtle">
-        <h4 class="text-sm font-bold text-zinc-100 uppercase tracking-wide">PARAMETERS & RISK CONFIGURATION</h4>
-        <button id="btnCloseSettings" class="text-zinc-400 hover:text-white text-base">✕</button>
-      </div>
-
-      <form id="settingsForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 text-zinc-300">
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Starting Virtual Balance ($)</label>
-          <input type="number" id="cfgStartBalance" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="10000" min="100" step="100">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Virtual Fixed Stake ($)</label>
-          <input type="number" id="cfgStake" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="10" min="1" step="1">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Assumed Payout Ratio (%)</label>
-          <input type="number" id="cfgPayout" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="80" min="10" max="100" step="1">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Signal Confidence Threshold (0-100)</label>
-          <input type="number" id="cfgThreshold" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="70" min="50" max="95" step="1">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Contract Duration (Ticks)</label>
-          <input type="number" id="cfgContractTicks" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="5" min="1" max="15">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Ticks for Indicator Analysis</label>
-          <input type="number" id="cfgAnalysisWindow" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="30" min="10" max="100">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Max Consecutive Losses</label>
-          <input type="number" id="cfgMaxConsecLosses" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="3" min="1" max="10">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Max Session Drawdown (%)</label>
-          <input type="number" id="cfgMaxDD" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="5" min="1" max="50">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Loss Cooldown (Ticks)</label>
-          <input type="number" id="cfgCooldown" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="8" min="0" max="50">
-        </div>
-
-        <div>
-          <label class="block text-zinc-400 text-[11px] mb-1">Max Trades Per Session</label>
-          <input type="number" id="cfgMaxTrades" class="w-full bg-zinc-950 border border-subtle rounded px-2.5 py-1.5 focus:border-zinc-500 focus:outline-none text-white" value="100" min="5" max="1000">
-        </div>
-      </form>
-
-      <div class="flex items-center justify-between pt-3 border-t border-subtle mt-2">
-        <button type="button" id="btnResetDefaults" class="text-zinc-500 hover:text-zinc-300 underline text-[11px]">
-          Reset defaults
-        </button>
-        <div class="flex space-x-2">
-          <button type="button" id="btnCancelSettings" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded font-medium">Cancel</button>
-          <button type="button" id="btnSaveSettings" class="px-3 py-1.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded">Save & Apply</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- APPLICATION JAVASCRIPT ARCHITECTURE -->
-  <script>
-  /**
-   * DERIV HIGHER/LOWER RESEARCH BOT - V0.1
-   * Modular Architecture:
-   * 1. MarketData (Simulated regime-switching stream, Deriv WebSocket ready)
-   * 2. SignalEngine (Multi-factor quant evaluator: momentum, directional ratio, mean rev, volatility)
-   * 3. RiskManager (Streak defense, drawdown protector, tick cooldown)
-   * 4. PaperTradingEngine (Fixed stake virtual execution with strict 80% payout logic)
-   * 5. StatisticsEngine (Live financial metrics + segregated theoretical accuracy)
-   * 6. ChartRenderer (HTML5 Canvas smoothed tick trajectory with event markers)
-   * 7. TerminalUI (Application orchestrator & event coordinator)
-   */
-
-  // --- 1. CONFIGURATION STORE ---
-  const DEFAULT_CONFIG = {
-    startBalance: 10000.0,
-    stake: 10.0,
-    payout: 80, // %
-    confidenceThreshold: 70, // 0 - 100
-    contractTicks: 5,
-    analysisWindow: 30,
-    maxConsecutiveLosses: 3,
-    maxDrawdownPct: 5.0,
-    cooldownTicks: 8,
-    maxTrades: 100,
-    autoTrade: true
-  };
-
-  let AppConfig = { ...DEFAULT_CONFIG };
-
-  // --- 2. MARKET DATA SUBSYSTEM (MODULAR INTERFACE) ---
-  class MarketDataSimulator {
-    constructor() {
-      this.listeners = [];
-      this.price = 1250.00;
-      this.ticksCount = 0;
-      this.history = []; // Array of { time, price, delta, regime }
-      this.currentRegime = 'Normal'; // 'Normal' | 'HighVolTrend' | 'MeanRevertingChoppy'
-      this.regimeTimer = 0;
-      this.drift = 0.0;
-      this.baseVolatility = 0.45;
-    }
-
-    subscribe(callback) {
-      this.listeners.push(callback);
-    }
-
-    notify(tick) {
-      for (const cb of this.listeners) {
-        cb(tick);
-      }
-    }
-
-    reset() {
-      this.price = 1250.00;
-      this.ticksCount = 0;
-      this.history = [];
-      this.currentRegime = 'Normal';
-      this.regimeTimer = 0;
-      this.drift = 0.0;
-    }
-
-    // Regime Switching Random Walk to simulate Volatility 100 (1s)
-    generateNextTick() {
-      this.ticksCount++;
-      this.regimeTimer++;
-
-      // Change regime periodically
-      if (this.regimeTimer > 25 + Math.random() * 30) {
-        this.regimeTimer = 0;
-        const roll = Math.random();
-        if (roll < 0.4) {
-          this.currentRegime = 'Normal';
-          this.drift = (Math.random() - 0.5) * 0.1;
-        } else if (roll < 0.7) {
-          this.currentRegime = 'HighVolTrend';
-          // strong directional bias
-          this.drift = (Math.random() > 0.5 ? 1 : -1) * (0.35 + Math.random() * 0.3);
-        } else {
-          this.currentRegime = 'MeanRevertingChoppy';
-          this.drift = 0.0;
-        }
-      }
-
-      // Volatility scale by regime
-      let vol = this.baseVolatility;
-      if (this.currentRegime === 'HighVolTrend') vol *= 1.8;
-      if (this.currentRegime === 'MeanRevertingChoppy') vol *= 0.7;
-
-      // Box-Muller normal distribution random
-      const u1 = Math.max(1e-6, Math.random());
-      const u2 = Math.random();
-      const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-
-      let delta = (z * vol) + this.drift;
-
-      // If mean reverting, pull back to recent baseline
-      if (this.currentRegime === 'MeanRevertingChoppy' && this.history.length > 10) {
-        const recentAvg = this.history.slice(-10).reduce((a, b) => a + b.price, 0) / 10;
-        const pull = (recentAvg - this.price) * 0.15;
-        delta += pull;
-      }
-
-      // Avoid exactly zero delta
-      if (Math.abs(delta) < 0.01) delta = (Math.random() > 0.5 ? 0.04 : -0.04);
-
-      const oldPrice = this.price;
-      this.price = Math.round((this.price + delta) * 100) / 100;
-      const actualDelta = Math.round((this.price - oldPrice) * 100) / 100;
-
-      const tickObj = {
-        tickNumber: this.ticksCount,
-        timestamp: new Date(),
-        price: this.price,
-        delta: actualDelta,
-        direction: actualDelta > 0 ? 'UP' : actualDelta < 0 ? 'DOWN' : 'FLAT',
-        regime: this.currentRegime,
-        volatility: Math.abs(actualDelta)
-      };
-
-      this.history.push(tickObj);
-      if (this.history.length > 500) this.history.shift();
-
-      this.notify(tickObj);
-      return tickObj;
-    }
+// ============================================================================
+// MODULE: MarketData — replaceable feed
+// ----------------------------------------------------------------------------
+// TO INTEGRATE DERIV LATER (do not enable in V0.1):
+//   const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+//   ws.onopen = ()=> ws.send(JSON.stringify({ticks:'R_100', subscribe:1}));
+//   ws.onmessage = (e)=>{ const d=JSON.parse(e.data); if(d.tick) MarketData.onLiveTick({price:parseFloat(d.tick.quote), time:d.tick.epoch}); };
+// Current: synthetic regime-switching feed.
+// ============================================================================
+const MarketData = {
+  source:'SIMULATED',
+  regimes:['CALM','NORMAL','VOLATILE','TURBULENT'],
+  volMap:{CALM:0.28,NORMAL:0.58,VOLATILE:1.15,TURBULENT:1.95},
+  generateTick(){
+    if(Math.random()<0.023){ state.regime = this.regimes[Math.floor(Math.random()*this.regimes.length)]; }
+    const baseVol = this.volMap[state.regime]||0.58;
+    state.trend = clamp(state.trend*0.985 + randn()*0.028, -0.65, 0.65);
+    let jump=0;
+    if(state.regime==='TURBULENT' && Math.random()<0.07) jump=randn()*1.55;
+    else if(state.regime==='VOLATILE' && Math.random()<0.032) jump=randn()*0.95;
+    else if(Math.random()<0.006) jump=randn()*0.7;
+    let change = randn()*baseVol + state.trend*0.38 + jump;
+    change += (5000-state.price)*0.00045; // soft mean anchor
+    state.prevPrice = state.price;
+    state.price += change;
+    if(state.price<1000) state.price=1000+Math.random()*12;
+    const prev = state.ticks.length? state.ticks[state.ticks.length-1].price : state.price;
+    const dir = state.price>prev?1: state.price<prev?-1:0;
+    const tick={price:state.price, time:Date.now(), dir, tickIndex:state.tickCount};
+    state.ticks.push(tick);
+    if(state.ticks.length>600) state.ticks.shift();
+    state.tickCount++;
+    return tick;
   }
+};
 
-  // --- 3. QUANTITATIVE SIGNAL ENGINE ---
-  class SignalEngine {
-    constructor(config) {
-      this.config = config;
+// ============================================================================
+// MODULE: SignalEngine — pure analyze(ticks, config)
+// Factors: (1) tick direction (2) short momentum (3) consecutive (4) directional
+// ratio (5) short volatility (6) distance from mean (7) reversal pressure
+// (8) trend/regime. Output HIGHER/LOWER/WAIT + confidence + explanation.
+// ============================================================================
+const SignalEngine = {
+  analyze(ticks, config){
+    const lookback=config.lookback||30, threshold=config.threshold||70;
+    if(ticks.length<Math.max(lookback,8)){
+      return {signal:'WAIT',confidence:0,totalScore:0,
+        metrics:{momentum:0,bias:0.5,consecutive:0,lastDir:0,vol:0.55,z:0,sma:ticks.length?ticks[ticks.length-1].price:5000,regime:'WARMUP',trend:0},
+        explanation:`Collecting ticks… ${ticks.length}/${lookback} needed for modular 8-factor scoring.`, regime:'WARMUP'};
     }
-
-    analyze(ticksHistory) {
-      const windowSize = Math.min(this.config.analysisWindow, ticksHistory.length);
-      if (windowSize < 8) {
-        return {
-          signal: 'WAIT',
-          confidence: 20,
-          momentum: 0,
-          biasRatio: 50,
-          consecutiveCount: 0,
-          meanRevZ: 0,
-          explanation: 'Collecting baseline ticks...'
-        };
-      }
-
-      const sample = ticksHistory.slice(-windowSize);
-      const latestTick = sample[sample.length - 1];
-
-      // 1. Momentum factor (Rate of change over short 5-tick window)
-      const mom5Window = Math.min(5, sample.length - 1);
-      const pastPrice5 = sample[sample.length - 1 - mom5Window].price;
-      const momPct = ((latestTick.price - pastPrice5) / pastPrice5) * 100;
-
-      // 2. Directional Ratio (% of positive ticks in window)
-      let upTicks = 0;
-      let downTicks = 0;
-      for (let i = 1; i < sample.length; i++) {
-        if (sample[i].price > sample[i-1].price) upTicks++;
-        else if (sample[i].price < sample[i-1].price) downTicks++;
-      }
-      const totalMovedTicks = upTicks + downTicks || 1;
-      const bullRatio = (upTicks / totalMovedTicks) * 100; // 0 to 100
-
-      // 3. Consecutive Ticks Streak
-      let consecutiveCount = 1;
-      let currentDir = sample[sample.length - 1].direction;
-      for (let i = sample.length - 2; i >= 0; i--) {
-        if (sample[i].direction === currentDir) {
-          consecutiveCount++;
-        } else {
-          break;
-        }
-      }
-
-      // 4. Mean Reversion Z-score relative to sample SMA
-      const prices = sample.map(t => t.price);
-      const sma = prices.reduce((a, b) => a + b, 0) / prices.length;
-      const variance = prices.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / prices.length;
-      const stdDev = Math.sqrt(variance) || 0.1;
-      const zScore = (latestTick.price - sma) / stdDev;
-
-      // 5. Multi-factor scoring
-      let higherPoints = 0;
-      let lowerPoints = 0;
-      let reasons = [];
-
-      // Momentum factor (max 30 pts)
-      if (momPct > 0.05) {
-        higherPoints += Math.min(30, (momPct / 0.25) * 30);
-      } else if (momPct < -0.05) {
-        lowerPoints += Math.min(30, (Math.abs(momPct) / 0.25) * 30);
-      }
-
-      // Directional Ratio factor (max 25 pts)
-      if (bullRatio >= 60) {
-        higherPoints += ((bullRatio - 50) / 50) * 25;
-      } else if (bullRatio <= 40) {
-        lowerPoints += ((50 - bullRatio) / 50) * 25;
-      }
-
-      // Regime & Streak Interaction (max 25 pts)
-      // If trend regime: consecutive moves confirm direction.
-      // If choppy regime: consecutive moves > 3 trigger exhaustion mean-reversion!
-      if (latestTick.regime === 'HighVolTrend') {
-        if (currentDir === 'UP') {
-          higherPoints += Math.min(25, consecutiveCount * 6);
-          reasons.push(`Trend expansion (${consecutiveCount} up ticks)`);
-        } else if (currentDir === 'DOWN') {
-          lowerPoints += Math.min(25, consecutiveCount * 6);
-          reasons.push(`Trend breakdown (${consecutiveCount} down ticks)`);
-        }
-      } else {
-        // Choppy / Mean Reverting regime
-        if (consecutiveCount >= 3) {
-          if (currentDir === 'UP') {
-            lowerPoints += Math.min(25, (consecutiveCount - 2) * 8);
-            reasons.push(`Exhaustion ceiling (${consecutiveCount} consecutive up ticks)`);
-          } else if (currentDir === 'DOWN') {
-            higherPoints += Math.min(25, (consecutiveCount - 2) * 8);
-            reasons.push(`Oversold bounce expected (${consecutiveCount} consec. down ticks)`);
-          }
-        }
-      }
-
-      // Mean Reversion Z-Score factor (max 20 pts)
-      if (zScore < -1.4) {
-        higherPoints += Math.min(20, Math.abs(zScore) * 10);
-        reasons.push(`Z-Score ${zScore.toFixed(2)} (Oversold vs SMA)`);
-      } else if (zScore > 1.4) {
-        lowerPoints += Math.min(20, zScore * 10);
-        reasons.push(`Z-Score +${zScore.toFixed(2)} (Overbought vs SMA)`);
-      }
-
-      // Synthesize Confidence
-      const higherConfidence = Math.min(95, Math.round(higherPoints));
-      const lowerConfidence = Math.min(95, Math.round(lowerPoints));
-
-      let signal = 'WAIT';
-      let confidence = 0;
-      let finalReason = '';
-
-      if (higherConfidence >= lowerConfidence) {
-        confidence = higherConfidence;
-        if (confidence >= this.config.confidenceThreshold) {
-          signal = 'HIGHER';
-          finalReason = `Bullish confluence (${reasons.slice(0, 2).join(', ') || 'ROC +' + momPct.toFixed(2) + '%'})`;
-        } else {
-          signal = 'WAIT';
-          finalReason = `Score ${confidence}/${this.config.confidenceThreshold} below threshold. Waiting for higher probability.`;
-        }
-      } else {
-        confidence = lowerConfidence;
-        if (confidence >= this.config.confidenceThreshold) {
-          signal = 'LOWER';
-          finalReason = `Bearish confluence (${reasons.slice(0, 2).join(', ') || 'ROC ' + momPct.toFixed(2) + '%'})`;
-        } else {
-          signal = 'WAIT';
-          finalReason = `Score ${confidence}/${this.config.confidenceThreshold} below threshold. Waiting for setup.`;
-        }
-      }
-
-      return {
-        signal,
-        confidence: Math.max(10, Math.min(95, confidence)),
-        momentum: momPct,
-        biasRatio: Math.round(bullRatio),
-        consecutiveCount: currentDir === 'FLAT' ? 0 : consecutiveCount,
-        meanRevZ: zScore,
-        explanation: finalReason
-      };
-    }
+    const prices=ticks.slice(-lookback).map(t=>t.price);
+    const price=prices[prices.length-1];
+    const returns=[]; for(let i=1;i<prices.length;i++) returns.push(prices[i]-prices[i-1]);
+    const upCount=returns.filter(r=>r>0).length;
+    const directionalRatio=returns.length?upCount/returns.length:0.5;
+    let consecutive=0; const lastDir=ticks[ticks.length-1].dir;
+    if(lastDir!==0){ for(let i=ticks.length-1;i>=0;i--){ if(ticks[i].dir===lastDir)consecutive++; else if(ticks[i].dir===0)continue; else break; if(consecutive>=30)break; } }
+    const vol=stddev(returns)||0.35;
+    let regime='NORMAL';
+    if(vol<0.45)regime='CALM'; else if(vol<0.9)regime='NORMAL'; else if(vol<1.45)regime='VOLATILE'; else regime='TURBULENT';
+    const mom5=price-prices[Math.max(0,prices.length-5)];
+    const momNorm=clamp((mom5/(vol||0.5))*7,-35,35);
+    const biasScore=(directionalRatio-0.5)*60;
+    let consecutiveScore=0;
+    if(consecutive>=3){ consecutiveScore=lastDir===1?-7.5*consecutive:7.5*consecutive; consecutiveScore=clamp(consecutiveScore,-26,26); }
+    const smaVal=sma(prices);
+    const z=(price-smaVal)/(vol||0.5);
+    const meanRevScore=clamp(-z*9,-30,30);
+    const sma5=sma(prices.slice(-5)), sma20=sma(prices.slice(-Math.min(20,prices.length)));
+    let trendScore=0; if(sma5>sma20)trendScore=10; else if(sma5<sma20)trendScore=-10;
+    if(regime==='TURBULENT')trendScore*=0.55;
+    const total=momNorm*0.34+biasScore*0.22+consecutiveScore*0.16+meanRevScore*0.18+trendScore*0.10;
+    let confidence=Math.min(100,Math.abs(total)*1.35);
+    if(regime==='TURBULENT')confidence*=0.82; else if(regime==='VOLATILE')confidence*=0.92;
+    confidence=Math.round(confidence);
+    let signal='WAIT'; if(confidence>=threshold) signal=total>0?'HIGHER':'LOWER';
+    let reasons=[];
+    if(Math.abs(momNorm)>12)reasons.push(`5-tick momentum ${momNorm>0?'up':'down'} (${momNorm.toFixed(1)})`);
+    if(Math.abs(biasScore)>8)reasons.push(`bias ${(directionalRatio*100).toFixed(0)}% ${directionalRatio>0.5?'up':'down'}`);
+    if(consecutive>=3)reasons.push(`${consecutive}× consecutive ${lastDir===1?'up':'down'} → reversal pressure`);
+    if(Math.abs(z)>0.8)reasons.push(`price ${z>0?'above':'below'} SMA (${z.toFixed(2)}σ)`);
+    if(trendScore!==0)reasons.push(`trend ${trendScore>0?'up':'down'} (SMA5 vs SMA20)`);
+    if(regime==='TURBULENT'||regime==='VOLATILE')reasons.push(`high volatility (${regime}) dampens confidence`);
+    if(!reasons.length)reasons.push(`mixed / weak edge — no dominant factor`);
+    let explanation=reasons.slice(0,3).join(' • ');
+    explanation = signal==='WAIT' ? `WAIT — confidence ${confidence} < threshold ${threshold}. `+explanation : `${signal} — confidence ${confidence} ≥ ${threshold}. `+explanation;
+    return {signal,confidence,totalScore:total,metrics:{momentum:momNorm,bias:directionalRatio,consecutive,lastDir,vol,z,sma:smaVal,regime,trend:trendScore},explanation,regime};
   }
+};
 
-  // --- 4. RISK CONTROLLER ---
-  class RiskManager {
-    constructor(config) {
-      this.config = config;
-      this.consecutiveLosses = 0;
-      this.cooldownRemaining = 0;
-      this.blockedCount = 0;
-    }
-
-    reset() {
-      this.consecutiveLosses = 0;
-      this.cooldownRemaining = 0;
-      this.blockedCount = 0;
-    }
-
-    onTick() {
-      if (this.cooldownRemaining > 0) {
-        this.cooldownRemaining--;
-      }
-    }
-
-    recordTradeResult(isWin) {
-      if (isWin) {
-        this.consecutiveLosses = 0;
-      } else {
-        this.consecutiveLosses++;
-        if (this.consecutiveLosses >= this.config.maxConsecutiveLosses) {
-          this.cooldownRemaining = this.config.cooldownTicks;
-        }
-      }
-    }
-
-    canExecute(stats) {
-      // 1. Max trades reached
-      if (stats.tradesCount >= this.config.maxTrades) {
-        this.blockedCount++;
-        return { allowed: false, reason: 'Session trade limit reached' };
-      }
-
-      // 2. Max Drawdown reached
-      if (stats.drawdownPct >= this.config.maxDrawdownPct) {
-        this.blockedCount++;
-        return { allowed: false, reason: `Max DD limit (${this.config.maxDrawdownPct}%) breached` };
-      }
-
-      // 3. Cooldown active
-      if (this.cooldownRemaining > 0) {
-        this.blockedCount++;
-        return { allowed: false, reason: `In cooldown (${this.cooldownRemaining} ticks remaining)` };
-      }
-
-      // 4. Consecutive losses threshold breached
-      if (this.consecutiveLosses >= this.config.maxConsecutiveLosses) {
-        this.blockedCount++;
-        return { allowed: false, reason: `Halt: ${this.consecutiveLosses} consecutive losses` };
-      }
-
-      return { allowed: true, reason: 'OK' };
-    }
+// ============================================================================
+// MODULE: RiskManager — conservative, fixed stake, no martingale
+// ============================================================================
+const RiskManager = {
+  canTrade(analysis, st, isForced){
+    if(st.balance<st.stake) return false;
+    if(st.trades.length+st.openTrades.length>=st.maxTrades) return false;
+    if((st.peakBalance-st.balance)>=st.maxDrawdown) return false;
+    if(isForced) return true; // force bypasses cooldown/streak for accounting test
+    if(st.cooldownRemaining>0) return false;
+    if(st.currentLossStreak>=st.maxConsecLosses) return false;
+    return true;
+  },
+  getStatus(st){
+    if(st.isHalted) return {text:`HALTED — ${st.haltReason}`,tone:'halted'};
+    if(st.cooldownRemaining>0) return {text:`COOLDOWN — ${st.cooldownRemaining} ticks remaining after ${st.maxConsecLosses} consecutive losses. Auto-trading paused; accounting continues.`,tone:'cooldown'};
+    if(st.trades.length>=st.maxTrades) return {text:`SESSION LIMIT — ${st.maxTrades} trades reached`,tone:'halted'};
+    if((st.peakBalance-st.balance)>=st.maxDrawdown) return {text:`DRAWDOWN HALT — ${formatMoney(st.peakBalance-st.balance)} drawdown`,tone:'halted'};
+    if(st.currentLossStreak>=st.maxConsecLosses) return {text:`LOSS-STREAK GUARD — ${st.currentLossStreak} consecutive losses. Cooling down.`,tone:'cooldown'};
+    if(st.openTrades.length>0) return {text:`READY — ${st.openTrades.length} virtual position(s) open. Risk checks passed.`,tone:'ready'};
+    return {text:'READY — risk checks passed. Awaiting high-confidence signal.',tone:'ready'};
   }
+};
 
-  // --- 5. PAPER TRADING & STATS ENGINE ---
-  class PaperTradingEngine {
-    constructor(config, riskManager) {
-      this.config = config;
-      this.riskManager = riskManager;
-      this.balance = config.startBalance;
-      this.peakBalance = config.startBalance;
-      this.trades = [];
-      this.pendingTrades = []; // Contracts pending expiry in N ticks
-      this.theoreticalSignals = []; // Tracks every signal regardless of execution for pure accuracy metrics
-
-      // Detailed Streak & Stats counters
-      this.wins = 0;
-      this.losses = 0;
-      this.totalWinProfit = 0;
-      this.totalLossCapital = 0;
-      this.currentWinStreak = 0;
-      this.currentLossStreak = 0;
-      this.maxLossStreak = 0;
-      this.maxDrawdownDollars = 0;
-      this.maxDrawdownPct = 0;
+// ============================================================================
+// MODULE: PaperTradingEngine — fixed stake, 5-tick settlement
+// ============================================================================
+const PaperTradingEngine = {
+  enter(analysis, isForced){
+    let dir=analysis.signal, conf=analysis.confidence;
+    if(isForced && (dir==='WAIT'||!dir)){ dir = state.forceDirToggle===1?'HIGHER':'LOWER'; state.forceDirToggle*=-1; conf=Math.max(conf,55); }
+    if(dir==='WAIT') return null;
+    const trade={id:Date.now()+Math.random(), time:new Date(), direction:dir, confidence:conf,
+      entryPrice:state.price, entryTick:state.tickCount, resolveTick:state.tickCount+SETTLE_TICKS,
+      stake:state.stake, payout:state.payout, result:null, pl:0, exitPrice:null, streakAfter:0, forced:!!isForced};
+    state.openTrades.push(trade);
+    toast((isForced?'⚡ FORCED ':'')+dir+' @ '+formatPrice(trade.entryPrice), `CONF ${conf} · STAKE ${formatMoney(trade.stake)} · SETTLES IN ${SETTLE_TICKS} TICKS`, dir==='HIGHER'?'win':'info');
+    return trade;
+  },
+  update(){
+    const remaining=[];
+    for(const t of state.openTrades){
+      if(state.tickCount>=t.resolveTick){
+        const exitPrice=state.price; t.exitPrice=exitPrice;
+        let win=false;
+        if(t.direction==='HIGHER'&&exitPrice>t.entryPrice)win=true;
+        else if(t.direction==='LOWER'&&exitPrice<t.entryPrice)win=true;
+        else win=false;
+        t.result=win?'WIN':'LOSS';
+        t.pl=win?t.stake*t.payout:-t.stake;
+        state.balance+=t.pl;
+        if(win){state.currentWinStreak++;state.currentLossStreak=0;if(state.currentWinStreak>state.maxWinningStreak)state.maxWinningStreak=state.currentWinStreak;}
+        else{state.currentLossStreak++;state.currentWinStreak=0;if(state.currentLossStreak>state.maxLosingStreak)state.maxLosingStreak=state.currentLossStreak;
+          if(state.currentLossStreak>=state.maxConsecLosses)state.cooldownRemaining=state.cooldownDuration;}
+        t.streakAfter=win?state.currentWinStreak:-state.currentLossStreak;
+        state.trades.push(t);
+        toast(t.result==='WIN'?'✓ WIN '+formatMoneySigned(t.pl):'✕ LOSS '+formatMoneySigned(t.pl), `${t.direction} ${formatPrice(t.entryPrice)} → ${formatPrice(exitPrice)}${t.forced?' · FORCED TEST':''}`, t.result==='WIN'?'win':'loss');
+      } else remaining.push(t);
     }
-
-    reset() {
-      this.balance = this.config.startBalance;
-      this.peakBalance = this.config.startBalance;
-      this.trades = [];
-      this.pendingTrades = [];
-      this.theoreticalSignals = [];
-      this.wins = 0;
-      this.losses = 0;
-      this.totalWinProfit = 0;
-      this.totalLossCapital = 0;
-      this.currentWinStreak = 0;
-      this.currentLossStreak = 0;
-      this.maxLossStreak = 0;
-      this.maxDrawdownDollars = 0;
-      this.maxDrawdownPct = 0;
-    }
-
-    getStats() {
-      const tradesCount = this.trades.length;
-      const totalPL = this.balance - this.config.startBalance;
-      const winRate = tradesCount > 0 ? (this.wins / tradesCount) * 100 : 0;
-      const avgWin = this.wins > 0 ? this.totalWinProfit / this.wins : 0;
-      const avgLoss = this.losses > 0 ? this.totalLossCapital / this.losses : 0;
-      const profitFactor = this.totalLossCapital > 0 ? this.totalWinProfit / this.totalLossCapital : (this.totalWinProfit > 0 ? 99.9 : 0);
-      const ev = tradesCount > 0 ? totalPL / tradesCount : 0;
-
-      // Current Drawdown
-      const currentDDDollars = Math.max(0, this.peakBalance - this.balance);
-      const currentDDPct = this.peakBalance > 0 ? (currentDDDollars / this.peakBalance) * 100 : 0;
-
-      return {
-        balance: this.balance,
-        totalPL,
-        tradesCount,
-        wins: this.wins,
-        losses: this.losses,
-        winRate,
-        avgWin,
-        avgLoss,
-        profitFactor,
-        expectedValue: ev,
-        currentWinStreak: this.currentWinStreak,
-        currentLossStreak: this.currentLossStreak,
-        maxLossStreak: this.maxLossStreak,
-        drawdownPct: currentDDPct,
-        maxDrawdownPct: this.maxDrawdownPct
-      };
-    }
-
-    getTheoreticalAccuracy() {
-      const evaluated = this.theoreticalSignals.filter(s => s.completed);
-      if (evaluated.length === 0) {
-        return {
-          totalAccuracy: 0,
-          higherAccuracy: 0,
-          higherCount: 0,
-          lowerAccuracy: 0,
-          lowerCount: 0,
-          completedCount: 0
-        };
-      }
-
-      const totalCorrect = evaluated.filter(s => s.isCorrect).length;
-      const totalAccuracy = (totalCorrect / evaluated.length) * 100;
-
-      const higherSignals = evaluated.filter(s => s.direction === 'HIGHER');
-      const higherCorrect = higherSignals.filter(s => s.isCorrect).length;
-      const higherAccuracy = higherSignals.length > 0 ? (higherCorrect / higherSignals.length) * 100 : 0;
-
-      const lowerSignals = evaluated.filter(s => s.direction === 'LOWER');
-      const lowerCorrect = lowerSignals.filter(s => s.isCorrect).length;
-      const lowerAccuracy = lowerSignals.length > 0 ? (lowerCorrect / lowerSignals.length) * 100 : 0;
-
-      return {
-        totalAccuracy,
-        higherAccuracy,
-        higherCount: higherSignals.length,
-        lowerAccuracy,
-        lowerCount: lowerSignals.length,
-        completedCount: evaluated.length
-      };
-    }
-
-    processSignal(signalData, currentTick) {
-      if (signalData.signal === 'WAIT') return null;
-
-      // Register theoretical signal for pure statistical validation
-      const theoreticalItem = {
-        id: 'T-' + (this.theoreticalSignals.length + 1),
-        direction: signalData.signal,
-        entryPrice: currentTick.price,
-        entryTickNumber: currentTick.tickNumber,
-        targetTickNumber: currentTick.tickNumber + this.config.contractTicks,
-        completed: false,
-        isCorrect: false
-      };
-      this.theoreticalSignals.push(theoreticalItem);
-
-      // Verify if execution is allowed by RiskManager
-      const currentStats = this.getStats();
-      const riskCheck = this.riskManager.canExecute(currentStats);
-
-      if (!this.config.autoTrade || !riskCheck.allowed) {
-        return { executed: false, reason: riskCheck.reason };
-      }
-
-      // Avoid stacking too many concurrent open contracts for simplicity
-      if (this.pendingTrades.length >= 2) {
-        return { executed: false, reason: 'Pending trades slot full' };
-      }
-
-      // Create Paper Contract
-      const contract = {
-        id: 'PT-' + (this.trades.length + this.pendingTrades.length + 1),
-        time: currentTick.timestamp,
-        direction: signalData.signal,
-        confidence: signalData.confidence,
-        entryPrice: currentTick.price,
-        entryTickNumber: currentTick.tickNumber,
-        targetTickNumber: currentTick.tickNumber + this.config.contractTicks,
-        stake: this.config.stake,
-        payoutRatio: this.config.payout / 100,
-        theoreticalRef: theoreticalItem
-      };
-
-      this.pendingTrades.push(contract);
-      return { executed: true, contract };
-    }
-
-    evaluatePendingContracts(currentTick) {
-      const completedThisTick = [];
-
-      // 1. Evaluate Theoretical signals
-      for (const tSig of this.theoreticalSignals) {
-        if (!tSig.completed && currentTick.tickNumber >= tSig.targetTickNumber) {
-          tSig.completed = true;
-          if (tSig.direction === 'HIGHER') {
-            tSig.isCorrect = currentTick.price > tSig.entryPrice;
-          } else if (tSig.direction === 'LOWER') {
-            tSig.isCorrect = currentTick.price < tSig.entryPrice;
-          }
-        }
-      }
-
-      // 2. Evaluate Executed Paper Trades
-      for (let i = this.pendingTrades.length - 1; i >= 0; i--) {
-        const trade = this.pendingTrades[i];
-        if (currentTick.tickNumber >= trade.targetTickNumber) {
-          // Outcome check: Deriv Higher/Lower strictly evaluates exit vs entry price
-          let isWin = false;
-          if (trade.direction === 'HIGHER') {
-            isWin = currentTick.price > trade.entryPrice;
-          } else if (trade.direction === 'LOWER') {
-            isWin = currentTick.price < trade.entryPrice;
-          }
-
-          let pl = 0;
-          if (isWin) {
-            pl = trade.stake * trade.payoutRatio; // Stake * 80% payout
-            this.wins++;
-            this.totalWinProfit += pl;
-            this.balance += pl;
-            this.currentWinStreak++;
-            this.currentLossStreak = 0;
-          } else {
-            pl = -trade.stake; // Stake lost
-            this.losses++;
-            this.totalLossCapital += trade.stake;
-            this.balance -= trade.stake;
-            this.currentLossStreak++;
-            this.currentWinStreak = 0;
-            if (this.currentLossStreak > this.maxLossStreak) {
-              this.maxLossStreak = this.currentLossStreak;
-            }
-          }
-
-          // Update Peak & Drawdown
-          if (this.balance > this.peakBalance) {
-            this.peakBalance = this.balance;
-          }
-          const ddDollars = Math.max(0, this.peakBalance - this.balance);
-          const ddPct = this.peakBalance > 0 ? (ddDollars / this.peakBalance) * 100 : 0;
-          if (ddPct > this.maxDrawdownPct) {
-            this.maxDrawdownPct = ddPct;
-            this.maxDrawdownDollars = ddDollars;
-          }
-
-          // Risk Manager Update
-          this.riskManager.recordTradeResult(isWin);
-
-          const completedRecord = {
-            id: trade.id,
-            time: trade.time,
-            direction: trade.direction,
-            confidence: trade.confidence,
-            entryPrice: trade.entryPrice,
-            exitPrice: currentTick.price,
-            result: isWin ? 'WIN' : 'LOSS',
-            pl: Math.round(pl * 100) / 100,
-            streak: isWin ? `+${this.currentWinStreak}` : `-${this.currentLossStreak}`,
-            balanceAfter: Math.round(this.balance * 100) / 100
-          };
-
-          this.trades.unshift(completedRecord);
-          if (this.trades.length > 200) this.trades.pop();
-
-          completedThisTick.push(completedRecord);
-          this.pendingTrades.splice(i, 1);
-        }
-      }
-
-      return completedThisTick;
-    }
+    state.openTrades=remaining;
   }
+};
 
-  // --- 6. CHART VISUALIZATION (CANVAS 2D) ---
-  class TerminalChart {
-    constructor(canvasId) {
-      this.canvas = document.getElementById(canvasId);
-      this.ctx = this.canvas.getContext('2d');
-      this.maxTicks = 140;
-      this.tradeMarkers = []; // { tickNumber, price, type: 'ENTRY_HIGHER'|'ENTRY_LOWER'|'WIN'|'LOSS' }
-      this.resizeCanvas();
-      window.addEventListener('resize', () => this.resizeCanvas());
-    }
-
-    resizeCanvas() {
-      const rect = this.canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      this.canvas.width = rect.width * dpr;
-      this.canvas.height = rect.height * dpr;
-      this.ctx.scale(dpr, dpr);
-      this.width = rect.width;
-      this.height = rect.height;
-    }
-
-    addMarker(marker) {
-      this.tradeMarkers.push(marker);
-      if (this.tradeMarkers.length > 100) this.tradeMarkers.shift();
-    }
-
-    clearMarkers() {
-      this.tradeMarkers = [];
-    }
-
-    render(ticks) {
-      const ctx = this.ctx;
-      const w = this.width;
-      const h = this.height;
-
-      ctx.clearRect(0, 0, w, h);
-
-      if (!ticks || ticks.length < 2) {
-        ctx.fillStyle = '#52525b';
-        ctx.font = '11px "JetBrains Mono"';
-        ctx.textAlign = 'center';
-        ctx.fillText('WAITING FOR TICK STREAM...', w / 2, h / 2);
-        return;
-      }
-
-      const visibleTicks = ticks.slice(-this.maxTicks);
-      const prices = visibleTicks.map(t => t.price);
-      let minPrice = Math.min(...prices);
-      let maxPrice = Math.max(...prices);
-
-      // Add padding
-      const pad = (maxPrice - minPrice) * 0.15 || 0.5;
-      minPrice -= pad;
-      maxPrice += pad;
-      const priceRange = maxPrice - minPrice || 1;
-
-      const getX = (index) => {
-        if (visibleTicks.length <= 1) return 0;
-        return (index / (visibleTicks.length - 1)) * (w - 65);
-      };
-
-      const getY = (price) => {
-        return h - 25 - ((price - minPrice) / priceRange) * (h - 50);
-      };
-
-      // 1. Draw subtle background grid lines
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-      ctx.lineWidth = 1;
-      const gridSteps = 4;
-      for (let i = 0; i <= gridSteps; i++) {
-        const yVal = 20 + (i / gridSteps) * (h - 45);
-        ctx.beginPath();
-        ctx.moveTo(0, yVal);
-        ctx.lineTo(w - 65, yVal);
-        ctx.stroke();
-
-        // Price label on right rail
-        const pLabel = maxPrice - (i / gridSteps) * priceRange;
-        ctx.fillStyle = '#52525b';
-        ctx.font = '9px "JetBrains Mono"';
-        ctx.textAlign = 'left';
-        ctx.fillText(pLabel.toFixed(2), w - 58, yVal + 3);
-      }
-
-      // 2. Draw price area fill & line
-      ctx.beginPath();
-      ctx.moveTo(getX(0), getY(visibleTicks[0].price));
-      for (let i = 1; i < visibleTicks.length; i++) {
-        ctx.lineTo(getX(i), getY(visibleTicks[i].price));
-      }
-
-      // Stroke line
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1.75;
-      ctx.stroke();
-
-      // Soft gradient under the curve
-      const lastX = getX(visibleTicks.length - 1);
-      ctx.lineTo(lastX, h - 20);
-      ctx.lineTo(getX(0), h - 20);
-      ctx.closePath();
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // 3. Current price pulse dot & crosshair line
-      const latestTick = visibleTicks[visibleTicks.length - 1];
-      const curX = lastX;
-      const curY = getY(latestTick.price);
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(0, curY);
-      ctx.lineTo(w, curY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Glow dot
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(curX, curY, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 4. Render trade entry & outcome markers
-      const firstVisibleTickNum = visibleTicks[0].tickNumber;
-      for (const m of this.tradeMarkers) {
-        if (m.tickNumber >= firstVisibleTickNum) {
-          const tickIdx = visibleTicks.findIndex(t => t.tickNumber === m.tickNumber);
-          if (tickIdx !== -1) {
-            const mx = getX(tickIdx);
-            const my = getY(m.price);
-
-            if (m.type === 'ENTRY_HIGHER') {
-              ctx.fillStyle = '#60a5fa'; // Blue entry
-              ctx.beginPath();
-              ctx.arc(mx, my, 4, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.fillStyle = '#93c5fd';
-              ctx.font = '8px "JetBrains Mono"';
-              ctx.fillText('▲ HIGHER', mx - 18, my - 8);
-            } else if (m.type === 'ENTRY_LOWER') {
-              ctx.fillStyle = '#60a5fa';
-              ctx.beginPath();
-              ctx.arc(mx, my, 4, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.fillStyle = '#93c5fd';
-              ctx.font = '8px "JetBrains Mono"';
-              ctx.fillText('▼ LOWER', mx - 18, my + 14);
-            } else if (m.type === 'WIN') {
-              ctx.fillStyle = '#34d399'; // Emerald
-              ctx.beginPath();
-              ctx.arc(mx, my, 5, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.fillStyle = '#a7f3d0';
-              ctx.font = 'bold 9px "JetBrains Mono"';
-              ctx.fillText('✓ WIN', mx - 12, my - 9);
-            } else if (m.type === 'LOSS') {
-              ctx.fillStyle = '#f87171'; // Rose
-              ctx.beginPath();
-              ctx.arc(mx, my, 5, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.fillStyle = '#fca5a5';
-              ctx.font = 'bold 9px "JetBrains Mono"';
-              ctx.fillText('✕ LOSS', mx - 14, my + 15);
-            }
-          }
-        }
-      }
-    }
+// ============================================================================
+// MODULE: StatisticsEngine — splits signal accuracy vs trade P/L
+// ============================================================================
+const StatisticsEngine = {
+  compute(){
+    const trades=state.trades;
+    const wins=trades.filter(t=>t.result==='WIN').length, losses=trades.filter(t=>t.result==='LOSS').length;
+    const winRate=trades.length?(wins/trades.length*100):null;
+    const grossProfit=wins*state.stake*state.payout, grossLoss=losses*state.stake;
+    const avgWin=wins?grossProfit/wins:0, avgLoss=losses?grossLoss/losses:0;
+    const totalPL=state.balance-state.startingBalance;
+    const ev=trades.length?totalPL/trades.length:0;
+    const pf=grossLoss>0?grossProfit/grossLoss:(grossProfit>0?Infinity:0);
+    const nonWait=state.signals.filter(s=>s.signal!=='WAIT'&&s.resolved);
+    const correct=nonWait.filter(s=>s.correct).length;
+    const sigAcc=nonWait.length?(correct/nonWait.length*100):null;
+    const hS=state.signals.filter(s=>s.signal==='HIGHER'&&s.resolved), hC=hS.filter(s=>s.correct).length;
+    const lS=state.signals.filter(s=>s.signal==='LOWER'&&s.resolved), lC=lS.filter(s=>s.correct).length;
+    const waitCount=state.signals.filter(s=>s.signal==='WAIT').length;
+    const waitFreq=state.signals.length?(waitCount/state.signals.length*100):0;
+    const higherCount=state.signals.filter(s=>s.signal==='HIGHER').length;
+    const lowerCount=state.signals.filter(s=>s.signal==='LOWER').length;
+    return {wins,losses,winRate,grossProfit,grossLoss,avgWin,avgLoss,totalPL,ev,pf,sigAcc,nonWait:hS.length+lS.length,
+      hAcc:hS.length?(hC/hS.length*100):null,lAcc:lS.length?(lC/lS.length*100):null,
+      waitFreq,higherCount,lowerCount,waitCount,resolved:state.signals.filter(s=>s.resolved).length};
   }
+};
 
-  // --- 7. APPLICATION ORCHESTRATOR & UI BINDING ---
-  class TerminalApp {
-    constructor() {
-      this.market = new MarketDataSimulator();
-      this.signalEngine = new SignalEngine(AppConfig);
-      this.riskManager = new RiskManager(AppConfig);
-      this.paperEngine = new PaperTradingEngine(AppConfig, this.riskManager);
-      this.chart = new TerminalChart('tickCanvas');
-
-      this.isRunning = false;
-      this.timer = null;
-      this.speedMs = 1000;
-      this.waitCount = 0;
-      this.totalSignalsGenerated = 0;
-
-      this.initDomElements();
-      this.bindEvents();
-      this.subscribeMarket();
-
-      // Initial run
-      this.start();
-    }
-
-    initDomElements() {
-      // Market DOM
-      this.elCurrentPrice = document.getElementById('currentPrice');
-      this.elPriceDelta = document.getElementById('priceDelta');
-      this.elPriceDeltaBadge = document.getElementById('priceDeltaBadge');
-      this.elPriceDirLabel = document.getElementById('priceDirectionLabel');
-      this.elTotalTicks = document.getElementById('totalTicksCount');
-      this.elMarketRegime = document.getElementById('marketRegime');
-      this.elTickVol = document.getElementById('tickVolatility');
-      this.elMarketStatus = document.getElementById('marketStatusBadge');
-      this.elFeedIndicator = document.getElementById('feedIndicator');
-
-      // Signal DOM
-      this.elSignalBadge = document.getElementById('signalBadge');
-      this.elConfidenceBar = document.getElementById('confidenceBar');
-      this.elConfidenceVal = document.getElementById('confidenceValue');
-      this.elSigMomentum = document.getElementById('sigMomentum');
-      this.elSigBias = document.getElementById('sigBias');
-      this.elSigConsecutive = document.getElementById('sigConsecutive');
-      this.elSigMeanRev = document.getElementById('sigMeanRev');
-      this.elSigExplanation = document.getElementById('signalExplanation');
-      this.elRiskStatusPill = document.getElementById('riskStatusPill');
-      this.elCooldownTicks = document.getElementById('cooldownTicksLeft');
-      this.elThresholdDisplay = document.getElementById('activeThresholdDisplay');
-      this.btnToggleAuto = document.getElementById('toggleAutoTrade');
-
-      // Paper Trading Stats DOM
-      this.elBalance = document.getElementById('statBalance');
-      this.elTotalPL = document.getElementById('statTotalPL');
-      this.elMaxDD = document.getElementById('statMaxDD');
-      this.elTradesCount = document.getElementById('statTradesCount');
-      this.elWinLoss = document.getElementById('statWinLoss');
-      this.elWinRate = document.getElementById('statWinRate');
-      this.elProfitFactor = document.getElementById('statProfitFactor');
-      this.elAvgWin = document.getElementById('statAvgWin');
-      this.elAvgLoss = document.getElementById('statAvgLoss');
-      this.elEV = document.getElementById('statEV');
-      this.elStreak = document.getElementById('statCurrentStreak');
-      this.elMaxLosingStreak = document.getElementById('statMaxLosingStreak');
-      this.elStartBalance = document.getElementById('statStartBalance');
-
-      // Strategy Analysis DOM
-      this.elAnalysisSignalAcc = document.getElementById('analysisSignalAcc');
-      this.elAnalysisHigherAcc = document.getElementById('analysisHigherAcc');
-      this.elAnalysisHigherCount = document.getElementById('analysisHigherCount');
-      this.elAnalysisLowerAcc = document.getElementById('analysisLowerAcc');
-      this.elAnalysisLowerCount = document.getElementById('analysisLowerCount');
-      this.elAnalysisWaitFreq = document.getElementById('analysisWaitFreq');
-      this.elAnalysisEdge = document.getElementById('analysisEdge');
-      this.elAnalysisRiskFilters = document.getElementById('analysisRiskFilters');
-      this.elBreakevenStatus = document.getElementById('breakevenStatus');
-
-      // History Table
-      this.elTradeHistory = document.getElementById('tradeHistoryBody');
-      this.elLoggedTradesCount = document.getElementById('loggedTradesCount');
-
-      // Modal Elements
-      this.settingsModal = document.getElementById('settingsModal');
-    }
-
-    bindEvents() {
-      // Start / Pause / Reset
-      document.getElementById('btnStart').addEventListener('click', () => this.start());
-      document.getElementById('btnPause').addEventListener('click', () => this.pause());
-      document.getElementById('btnReset').addEventListener('click', () => this.reset());
-
-      // Speed selection
-      document.getElementById('simSpeed').addEventListener('change', (e) => {
-        this.speedMs = parseInt(e.target.value, 10);
-        if (this.isRunning) {
-          this.pause();
-          this.start();
-        }
-      });
-
-      // Auto Trade toggle
-      this.btnToggleAuto.addEventListener('click', () => {
-        AppConfig.autoTrade = !AppConfig.autoTrade;
-        this.btnToggleAuto.textContent = AppConfig.autoTrade ? 'ENABLED (PAPER)' : 'MANUAL / OFF';
-        this.btnToggleAuto.className = AppConfig.autoTrade
-          ? 'text-[10px] px-2 py-0.5 rounded border border-zinc-600 bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-          : 'text-[10px] px-2 py-0.5 rounded border border-amber-600/50 bg-amber-950/40 text-amber-300';
-      });
-
-      // Settings Modal triggers
-      document.getElementById('btnSettings').addEventListener('click', () => this.openSettings());
-      document.getElementById('btnCloseSettings').addEventListener('click', () => this.closeSettings());
-      document.getElementById('btnCancelSettings').addEventListener('click', () => this.closeSettings());
-      document.getElementById('btnSaveSettings').addEventListener('click', () => this.saveSettings());
-      document.getElementById('btnResetDefaults').addEventListener('click', () => this.resetSettingsToDefaults());
-    }
-
-    subscribeMarket() {
-      this.market.subscribe((tick) => {
-        // 1. Advance Risk cooldown timer
-        this.riskManager.onTick();
-
-        // 2. Evaluate contracts completing at this tick
-        const completedTrades = this.paperEngine.evaluatePendingContracts(tick);
-        for (const t of completedTrades) {
-          this.chart.addMarker({
-            tickNumber: tick.tickNumber,
-            price: tick.price,
-            type: t.result === 'WIN' ? 'WIN' : 'LOSS'
-          });
-          this.addTradeToTable(t);
-        }
-
-        // 3. Compute Quant Signal
-        const signal = this.signalEngine.analyze(this.market.history);
-        this.totalSignalsGenerated++;
-        if (signal.signal === 'WAIT') {
-          this.waitCount++;
-        }
-
-        // 4. Paper trade candidate intake
-        if (signal.signal !== 'WAIT') {
-          const executionResult = this.paperEngine.processSignal(signal, tick);
-          if (executionResult && executionResult.executed) {
-            this.chart.addMarker({
-              tickNumber: tick.tickNumber,
-              price: tick.price,
-              type: signal.signal === 'HIGHER' ? 'ENTRY_HIGHER' : 'ENTRY_LOWER'
-            });
-          }
-        }
-
-        // 5. Update UI Dashboards
-        this.updateMarketUI(tick);
-        this.updateSignalUI(signal);
-        this.updateStatisticsUI();
-        this.chart.render(this.market.history);
-      });
-    }
-
-    start() {
-      if (this.isRunning) return;
-      this.isRunning = true;
-      this.elMarketStatus.textContent = 'STREAMING';
-      this.elMarketStatus.className = 'text-xs font-mono font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded inline-block';
-      this.elFeedIndicator.className = 'inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-
-      this.timer = setInterval(() => {
-        this.market.generateNextTick();
-      }, this.speedMs);
-    }
-
-    pause() {
-      this.isRunning = false;
-      clearInterval(this.timer);
-      this.timer = null;
-      this.elMarketStatus.textContent = 'PAUSED';
-      this.elMarketStatus.className = 'text-xs font-mono font-medium text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded inline-block';
-      this.elFeedIndicator.className = 'inline-block w-2.5 h-2.5 rounded-full bg-zinc-600';
-    }
-
-    reset() {
-      this.pause();
-      this.market.reset();
-      this.signalEngine = new SignalEngine(AppConfig);
-      this.riskManager.reset();
-      this.paperEngine.reset();
-      this.chart.clearMarkers();
-      this.waitCount = 0;
-      this.totalSignalsGenerated = 0;
-
-      this.elTradeHistory.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-zinc-600 text-xs">No paper trades recorded yet. Start simulation or click Step.</td></tr>`;
-      this.elLoggedTradesCount.textContent = '0';
-
-      this.updateMarketUI({
-        tickNumber: 0,
-        price: 1250.00,
-        delta: 0.00,
-        direction: 'FLAT',
-        regime: 'Normal',
-        volatility: 0.00
-      });
-
-      this.updateSignalUI({
-        signal: 'WAIT',
-        confidence: 0,
-        momentum: 0,
-        biasRatio: 50,
-        consecutiveCount: 0,
-        meanRevZ: 0,
-        explanation: 'Simulator reset. Initializing fresh statistical window.'
-      });
-
-      this.updateStatisticsUI();
-      this.chart.render([]);
-    }
-
-    updateMarketUI(tick) {
-      this.elCurrentPrice.textContent = tick.price.toFixed(2);
-      this.elPriceDelta.textContent = (tick.delta >= 0 ? '+' : '') + tick.delta.toFixed(2);
-      this.elTotalTicks.textContent = tick.tickNumber;
-      this.elMarketRegime.textContent = tick.regime;
-      this.elTickVol.textContent = tick.volatility.toFixed(2) + ' pt';
-
-      if (tick.direction === 'UP') {
-        this.elPriceDeltaBadge.className = 'font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-white border border-zinc-600';
-        this.elPriceDirLabel.textContent = 'UP ▲';
-        this.elPriceDirLabel.className = 'text-[10px] font-mono text-zinc-300 mt-1 uppercase font-semibold';
-      } else if (tick.direction === 'DOWN') {
-        this.elPriceDeltaBadge.className = 'font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700';
-        this.elPriceDirLabel.textContent = 'DOWN ▼';
-        this.elPriceDirLabel.className = 'text-[10px] font-mono text-zinc-400 mt-1 uppercase font-semibold';
-      } else {
-        this.elPriceDeltaBadge.className = 'font-mono text-xs px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-subtle';
-        this.elPriceDirLabel.textContent = 'FLAT —';
-        this.elPriceDirLabel.className = 'text-[10px] font-mono text-zinc-500 mt-1 uppercase';
-      }
-    }
-
-    updateSignalUI(sig) {
-      this.elSignalBadge.textContent = sig.signal;
-      this.elConfidenceVal.textContent = `${sig.confidence} / 100`;
-      this.elConfidenceBar.style.width = `${sig.confidence}%`;
-
-      if (sig.signal === 'HIGHER') {
-        this.elSignalBadge.className = 'text-3xl font-extrabold font-mono tracking-wider text-white bg-zinc-850 px-4 py-1 rounded border border-zinc-500 shadow-sm';
-        this.elConfidenceBar.className = 'h-full bg-white transition-all duration-300';
-      } else if (sig.signal === 'LOWER') {
-        this.elSignalBadge.className = 'text-3xl font-extrabold font-mono tracking-wider text-zinc-300 bg-zinc-850 px-4 py-1 rounded border border-zinc-600 shadow-sm';
-        this.elConfidenceBar.className = 'h-full bg-zinc-400 transition-all duration-300';
-      } else {
-        this.elSignalBadge.className = 'text-3xl font-extrabold font-mono tracking-wider text-zinc-500 py-1';
-        this.elConfidenceBar.className = 'h-full bg-zinc-600 transition-all duration-300';
-      }
-
-      this.elSigMomentum.textContent = (sig.momentum >= 0 ? '+' : '') + sig.momentum.toFixed(2) + '%';
-      this.elSigBias.textContent = `${sig.biasRatio}% Bull`;
-      this.elSigConsecutive.textContent = sig.consecutiveCount;
-      this.elSigMeanRev.textContent = `Z: ${sig.meanRevZ.toFixed(2)}`;
-      this.elSigExplanation.textContent = sig.explanation;
-
-      // Risk status display
-      const currentStats = this.paperEngine.getStats();
-      const riskAllowed = this.riskManager.canExecute(currentStats);
-      if (!riskAllowed.allowed) {
-        this.elRiskStatusPill.textContent = 'BLOCKED: ' + riskAllowed.reason;
-        this.elRiskStatusPill.className = 'text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/60 font-semibold';
-      } else {
-        this.elRiskStatusPill.textContent = 'ACTIVE / READY';
-        this.elRiskStatusPill.className = 'text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded border border-subtle';
-      }
-      this.elCooldownTicks.textContent = `${this.riskManager.cooldownRemaining} ticks`;
-      this.elThresholdDisplay.textContent = `${AppConfig.confidenceThreshold}%`;
-    }
-
-    updateStatisticsUI() {
-      const stats = this.paperEngine.getStats();
-
-      // Paper Trading DOM
-      this.elBalance.textContent = `$${stats.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      
-      const plPrefix = stats.totalPL >= 0 ? '+' : '';
-      this.elTotalPL.textContent = `${plPrefix}$${stats.totalPL.toFixed(2)}`;
-      if (stats.totalPL > 0) {
-        this.elTotalPL.className = 'text-lg font-bold text-white';
-      } else if (stats.totalPL < 0) {
-        this.elTotalPL.className = 'text-lg font-bold text-zinc-400';
-      } else {
-        this.elTotalPL.className = 'text-lg font-bold text-zinc-400';
-      }
-
-      this.elMaxDD.textContent = `${stats.maxDrawdownPct.toFixed(2)}%`;
-      this.elTradesCount.textContent = stats.tradesCount;
-      this.elWinLoss.textContent = `${stats.wins} / ${stats.losses}`;
-      this.elWinRate.textContent = `${stats.winRate.toFixed(1)}%`;
-      this.elProfitFactor.textContent = stats.profitFactor > 90 ? '∞' : stats.profitFactor.toFixed(2);
-      this.elAvgWin.textContent = `$${stats.avgWin.toFixed(2)}`;
-      this.elAvgLoss.textContent = `$${stats.avgLoss.toFixed(2)}`;
-      this.elEV.textContent = (stats.expectedValue >= 0 ? '+' : '') + `$${stats.expectedValue.toFixed(2)}`;
-      
-      if (stats.currentWinStreak > 0) {
-        this.elStreak.textContent = `${stats.currentWinStreak} WIN`;
-        this.elStreak.className = 'font-semibold text-white';
-      } else if (stats.currentLossStreak > 0) {
-        this.elStreak.textContent = `${stats.currentLossStreak} LOSS`;
-        this.elStreak.className = 'font-semibold text-zinc-400';
-      } else {
-        this.elStreak.textContent = '-';
-        this.elStreak.className = 'font-semibold text-zinc-300';
-      }
-
-      this.elMaxLosingStreak.textContent = stats.maxLossStreak;
-      this.elStartBalance.textContent = `$${AppConfig.startBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-
-      // Strategy Analysis DOM
-      const theo = this.paperEngine.getTheoreticalAccuracy();
-      this.elAnalysisSignalAcc.textContent = `${theo.totalAccuracy.toFixed(1)}%`;
-      this.elAnalysisHigherAcc.textContent = `${theo.higherAccuracy.toFixed(1)}%`;
-      this.elAnalysisHigherCount.textContent = `${theo.higherCount} completed calls`;
-      this.elAnalysisLowerAcc.textContent = `${theo.lowerAccuracy.toFixed(1)}%`;
-      this.elAnalysisLowerCount.textContent = `${theo.lowerCount} completed calls`;
-
-      const waitFreq = this.totalSignalsGenerated > 0 ? (this.waitCount / this.totalSignalsGenerated) * 100 : 100;
-      this.elAnalysisWaitFreq.textContent = `${waitFreq.toFixed(1)}%`;
-
-      // Theoretical edge: winRate - 55.56% (breakeven at 80% payout)
-      if (theo.completedCount > 0) {
-        const edge = theo.totalAccuracy - 55.56;
-        this.elAnalysisEdge.textContent = (edge >= 0 ? '+' : '') + `${edge.toFixed(2)}% over break-even`;
-        if (edge > 0) {
-          this.elBreakevenStatus.textContent = 'STATUS: THEORETICAL EDGE DETECTED';
-          this.elBreakevenStatus.className = 'text-white font-semibold';
-        } else {
-          this.elBreakevenStatus.textContent = 'STATUS: NEGATIVE EDGE REGIME';
-          this.elBreakevenStatus.className = 'text-zinc-500';
-        }
-      } else {
-        this.elAnalysisEdge.textContent = 'Awaiting completed signal evaluations';
-        this.elBreakevenStatus.textContent = 'STATUS: N/A';
-        this.elBreakevenStatus.className = 'text-zinc-500';
-      }
-
-      this.elAnalysisRiskFilters.textContent = `${this.riskManager.blockedCount} calls guarded`;
-    }
-
-    addTradeToTable(trade) {
-      if (this.paperEngine.trades.length === 1) {
-        this.elTradeHistory.innerHTML = '';
-      }
-
-      const row = document.createElement('tr');
-      row.className = 'hover:bg-zinc-850/60 transition-colors border-b border-subtle/50 font-mono text-[11px]';
-      
-      const timeStr = trade.time.toTimeString().split(' ')[0];
-      const isWin = trade.result === 'WIN';
-      const plColor = isWin ? 'text-white font-bold' : 'text-zinc-400 font-medium';
-      const resultBadge = isWin
-        ? '<span class="bg-zinc-100 text-zinc-950 font-bold px-1.5 py-0.5 rounded text-[10px]">WIN</span>'
-        : '<span class="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded text-[10px] border border-zinc-700">LOSS</span>';
-
-      const dirLabel = trade.direction === 'HIGHER'
-        ? '<span class="text-white font-semibold">▲ HIGHER</span>'
-        : '<span class="text-zinc-400 font-semibold">▼ LOWER</span>';
-
-      row.innerHTML = `
-        <td class="py-2 px-3 text-zinc-400">${timeStr}</td>
-        <td class="py-2 px-3">${dirLabel}</td>
-        <td class="py-2 px-3 text-right text-zinc-300">${trade.confidence}%</td>
-        <td class="py-2 px-3 text-right text-zinc-300">${trade.entryPrice.toFixed(2)}</td>
-        <td class="py-2 px-3 text-right text-zinc-300">${trade.exitPrice.toFixed(2)}</td>
-        <td class="py-2 px-3 text-center">${resultBadge}</td>
-        <td class="py-2 px-3 text-right ${plColor}">${(trade.pl > 0 ? '+' : '')}$${trade.pl.toFixed(2)}</td>
-        <td class="py-2 px-3 text-right text-zinc-400">${trade.streak}</td>
-      `;
-
-      this.elTradeHistory.insertBefore(row, this.elTradeHistory.firstChild);
-      this.elLoggedTradesCount.textContent = this.paperEngine.trades.length;
-    }
-
-    // Modal Handlers
-    openSettings() {
-      document.getElementById('cfgStartBalance').value = AppConfig.startBalance;
-      document.getElementById('cfgStake').value = AppConfig.stake;
-      document.getElementById('cfgPayout').value = AppConfig.payout;
-      document.getElementById('cfgThreshold').value = AppConfig.confidenceThreshold;
-      document.getElementById('cfgContractTicks').value = AppConfig.contractTicks;
-      document.getElementById('cfgAnalysisWindow').value = AppConfig.analysisWindow;
-      document.getElementById('cfgMaxConsecLosses').value = AppConfig.maxConsecutiveLosses;
-      document.getElementById('cfgMaxDD').value = AppConfig.maxDrawdownPct;
-      document.getElementById('cfgCooldown').value = AppConfig.cooldownTicks;
-      document.getElementById('cfgMaxTrades').value = AppConfig.maxTrades;
-
-      this.settingsModal.classList.remove('hidden');
-    }
-
-    closeSettings() {
-      this.settingsModal.classList.add('hidden');
-    }
-
-    saveSettings() {
-      AppConfig.startBalance = parseFloat(document.getElementById('cfgStartBalance').value) || 10000;
-      AppConfig.stake = parseFloat(document.getElementById('cfgStake').value) || 10;
-      AppConfig.payout = parseFloat(document.getElementById('cfgPayout').value) || 80;
-      AppConfig.confidenceThreshold = parseInt(document.getElementById('cfgThreshold').value, 10) || 70;
-      AppConfig.contractTicks = parseInt(document.getElementById('cfgContractTicks').value, 10) || 5;
-      AppConfig.analysisWindow = parseInt(document.getElementById('cfgAnalysisWindow').value, 10) || 30;
-      AppConfig.maxConsecutiveLosses = parseInt(document.getElementById('cfgMaxConsecLosses').value, 10) || 3;
-      AppConfig.maxDrawdownPct = parseFloat(document.getElementById('cfgMaxDD').value) || 5.0;
-      AppConfig.cooldownTicks = parseInt(document.getElementById('cfgCooldown').value, 10) || 8;
-      AppConfig.maxTrades = parseInt(document.getElementById('cfgMaxTrades').value, 10) || 100;
-
-      this.signalEngine.config = AppConfig;
-      this.riskManager.config = AppConfig;
-      this.paperEngine.config = AppConfig;
-
-      this.updateStatisticsUI();
-      this.closeSettings();
-    }
-
-    resetSettingsToDefaults() {
-      AppConfig = { ...DEFAULT_CONFIG };
-      this.openSettings(); // Reload inputs with defaults
-    }
+function resolvePendingSignals(){
+  const still=[];
+  for(const p of state.pendingSignals){
+    if(state.tickCount>=p.resolveTick){
+      const exitPrice=state.price;
+      let actual=null;
+      if(exitPrice>p.entryPrice)actual='HIGHER';else if(exitPrice<p.entryPrice)actual='LOWER';else actual='WAIT';
+      const sig=state.signals[p.index];
+      if(sig){sig.correct=(p.signal!=='WAIT'&&p.signal===actual);sig.actual=actual;sig.resolved=true;sig.exitPrice=exitPrice;}
+    } else still.push(p);
   }
+  state.pendingSignals=still;
+}
 
-  // --- BOOTSTRAP INITIALIZATION ON LOAD ---
-  window.addEventListener('DOMContentLoaded', () => {
-    window.botApp = new TerminalApp();
+// ---------- main tick ----------
+function generateTick(){
+  MarketData.generateTick();
+  if(state.cooldownRemaining>0){state.cooldownRemaining--;if(state.cooldownRemaining===0&&state.currentLossStreak>=state.maxConsecLosses)state.currentLossStreak=0;}
+  if((state.peakBalance-state.balance)>=state.maxDrawdown&&!state.isHalted){state.isHalted=true;state.haltReason=`max drawdown ${formatMoney(state.peakBalance-state.balance)} reached`;}
+  if(state.trades.length>=state.maxTrades&&!state.isHalted){state.isHalted=true;state.haltReason=`max trades ${state.maxTrades} reached`;}
+  const analysis=SignalEngine.analyze(state.ticks,{lookback:state.lookback,threshold:state.threshold});
+  state.lastSignal=analysis;
+  state.signals.push({signal:analysis.signal,confidence:analysis.confidence,entryPrice:state.price,tickIndex:state.tickCount,time:Date.now(),correct:null,resolved:false});
+  state.pendingSignals.push({signal:analysis.signal,confidence:analysis.confidence,entryPrice:state.price,entryTick:state.tickCount,resolveTick:state.tickCount+SETTLE_TICKS,index:state.signals.length-1});
+  if(!state.isHalted&&state.cooldownRemaining===0&&analysis.signal!=='WAIT'&&analysis.confidence>=state.threshold){
+    if(RiskManager.canTrade(analysis,state,false))PaperTradingEngine.enter(analysis,false);
+  }
+  resolvePendingSignals();
+  PaperTradingEngine.update();
+  if(state.balance>state.peakBalance)state.peakBalance=state.balance;
+  const dd=state.peakBalance-state.balance;
+  if(dd>state.maxDrawdownActual)state.maxDrawdownActual=dd;
+  state.balanceHistory.push(state.balance);
+  if(state.balanceHistory.length>400)state.balanceHistory.shift();
+  updateUI();
+}
+
+// ============================================================================
+// MODULE: Chart
+// ============================================================================
+let hoverIdx=null;
+const ChartModule={
+  draw(){
+    const canvas=$('elChartCanvas');if(!canvas)return;
+    const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();
+    canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+    const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+    const w=rect.width,h=rect.height;ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='#1c1c1e';ctx.lineWidth=1;
+    for(let i=0;i<4;i++){const y=10+(h-30)*(i/3);ctx.beginPath();ctx.moveTo(44,y);ctx.lineTo(w-10,y);ctx.stroke();}
+    for(let i=0;i<6;i++){const x=44+(w-54)*(i/5);ctx.beginPath();ctx.moveTo(x,10);ctx.lineTo(x,h-20);ctx.stroke();}
+    if(state.ticks.length<2){
+      ctx.fillStyle='#52525b';ctx.font='11px JetBrains Mono';ctx.textAlign='center';
+      ctx.fillText('Waiting for ticks — press START or ⚡ FORCE TEST',w/2,h/2-6);
+      ctx.fillStyle='#3f3f46';ctx.font='10px JetBrains Mono';ctx.fillText('SIMULATED VOLATILITY 100 (1s) · NO REAL TRADES',w/2,h/2+12);
+      return;
+    }
+    const visible=state.ticks.slice(-150),prices=visible.map(t=>t.price);
+    const min=Math.min(...prices),max=Math.max(...prices),pad=(max-min)*0.16||1.2;
+    const yMin=min-pad,yMax=max+pad,xScale=(w-54)/Math.max(1,visible.length-1),yScale=(h-30)/(yMax-yMin||1);
+    const X=i=>44+i*xScale,Y=p=>10+(yMax-p)*yScale;
+    // area
+    ctx.beginPath();visible.forEach((t,i)=>{i===0?ctx.moveTo(X(i),Y(t.price)):ctx.lineTo(X(i),Y(t.price));});
+    ctx.strokeStyle='#e4e4e7';ctx.lineWidth=1.3;ctx.lineJoin='round';ctx.stroke();
+    ctx.lineTo(X(visible.length-1),h-20);ctx.lineTo(X(0),h-20);ctx.closePath();
+    const g=ctx.createLinearGradient(0,10,0,h-20);g.addColorStop(0,'rgba(255,255,255,0.09)');g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g;ctx.fill();
+    ctx.beginPath();visible.forEach((t,i)=>{i===0?ctx.moveTo(X(i),Y(t.price)):ctx.lineTo(X(i),Y(t.price));});
+    ctx.strokeStyle='#fafafa';ctx.lineWidth=1.2;ctx.stroke();
+    // last point glow
+    const lx=X(visible.length-1),ly=Y(visible[visible.length-1].price);
+    ctx.beginPath();ctx.arc(lx,ly,3.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    ctx.beginPath();ctx.arc(lx,ly,7,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1;ctx.stroke();
+    const startIdx=visible[0].tickIndex;
+    state.trades.forEach(tr=>{
+      const idx=tr.entryTick-startIdx;if(idx<0||idx>=visible.length)return;
+      const x=X(idx),y=Y(tr.entryPrice);
+      if(tr.result==='WIN'){ctx.beginPath();ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fillStyle='#fafafa';ctx.fill();ctx.strokeStyle='#000';ctx.lineWidth=1.4;ctx.stroke();
+        ctx.beginPath();ctx.arc(x,y,1.7,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();}
+      else{ctx.beginPath();ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fillStyle='#0a0a0a';ctx.fill();ctx.strokeStyle='#a1a1aa';ctx.lineWidth=1.4;ctx.stroke();
+        ctx.beginPath();ctx.moveTo(x-2.4,y-2.4);ctx.lineTo(x+2.4,y+2.4);ctx.moveTo(x+2.4,y-2.4);ctx.lineTo(x-2.4,y+2.4);ctx.strokeStyle='#a1a1aa';ctx.lineWidth=1.1;ctx.stroke();}
+      ctx.fillStyle=tr.direction==='HIGHER'?'#fff':'#8a8a8e';ctx.font='bold 8px JetBrains Mono';ctx.textAlign='center';
+      ctx.fillText(tr.direction==='HIGHER'?'▲':'▼',x,y-10);
+    });
+    state.openTrades.forEach(tr=>{
+      const idx=tr.entryTick-startIdx;if(idx<0||idx>=visible.length)return;
+      const x=X(idx),y=Y(tr.entryPrice);
+      const pulse=(Date.now()/400)%2<1;
+      ctx.fillStyle=pulse?'#fff':'#52525b';ctx.fillRect(x-3.5,y-3.5,7,7);
+      ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.strokeRect(x-3.5,y-3.5,7,7);
+      ctx.strokeStyle='rgba(255,255,255,.35)';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(lx,ly);ctx.stroke();ctx.setLineDash([]);
+    });
+    if(hoverIdx!==null&&hoverIdx>=0&&hoverIdx<visible.length){
+      const x=X(hoverIdx),t=visible[hoverIdx],y=Y(t.price);
+      ctx.strokeStyle='rgba(255,255,255,.35)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,10);ctx.lineTo(x,h-20);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#000';ctx.stroke();
+    }
+    ctx.fillStyle='#71717a';ctx.font='10px JetBrains Mono';ctx.textAlign='right';
+    ctx.fillText(yMax.toFixed(2),40,14);ctx.fillText(yMin.toFixed(2),40,h-18);ctx.fillText(((yMax+yMin)/2).toFixed(2),40,h/2+3);
+    ctx.fillStyle='#fafafa';ctx.fillRect(Math.min(lx+6,w-76),ly-10,64,15);
+    ctx.fillStyle='#000';ctx.font='bold 10px JetBrains Mono';ctx.textAlign='left';
+    ctx.fillText(visible[visible.length-1].price.toFixed(2),Math.min(lx+10,w-72),ly+1);
+    canvas._geom={visible,X,Y,w,h};
+  },
+  drawEquity(){
+    const c=$('elEquityCanvas');if(!c)return;
+    const dpr=window.devicePixelRatio||1,r=c.getBoundingClientRect();
+    c.width=r.width*dpr;c.height=r.height*dpr;
+    const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+    const w=r.width,h=r.height;x.clearRect(0,0,w,h);
+    const hist=state.balanceHistory.slice(-200);
+    if(hist.length<2){x.fillStyle='#3f3f46';x.font='10px JetBrains Mono';x.textAlign='center';x.fillText('EQUITY FLAT — AWAITING TRADES',w/2,h/2+3);return;}
+    const min=Math.min(...hist,state.startingBalance),max=Math.max(...hist,state.startingBalance),rg=(max-min)||1;
+    const Y=v=>6+(max-v)/rg*(h-16),X=i=>4+i*(w-8)/Math.max(1,hist.length-1);
+    x.strokeStyle='#26262a';x.lineWidth=1;x.beginPath();x.moveTo(0,Y(state.startingBalance));x.lineTo(w,Y(state.startingBalance));x.stroke();
+    x.setLineDash([3,3]);x.strokeStyle='#52525b';x.stroke();x.setLineDash([]);
+    x.beginPath();hist.forEach((v,i)=>i===0?x.moveTo(X(i),Y(v)):x.lineTo(X(i),Y(v)));
+    const up=hist[hist.length-1]>=state.startingBalance;
+    x.strokeStyle=up?'#ffffff':'#71717a';x.lineWidth=1.5;x.stroke();
+    x.lineTo(X(hist.length-1),h-4);x.lineTo(X(0),h-4);x.closePath();
+    x.fillStyle=up?'rgba(255,255,255,0.07)':'rgba(113,113,122,0.12)';x.fill();
+  }
+};
+
+// ============================================================================
+// MODULE: TradeHistory + Settings
+// ============================================================================
+const TradeHistory={
+  render(){
+    const tb=$('elTradeHistoryBody');
+    if(!state.trades.length){tb.innerHTML='<tr><td colspan="7" class="px-4 py-10 text-center text-zinc-500 text-xs tracking-widest">NO TRADES YET — PRESS START<br><span class="text-[10px] text-zinc-600">OR USE ⚡ FORCE TEST</span></td></tr>';return;}
+    tb.innerHTML=state.trades.slice().reverse().slice(0,80).map(t=>{
+      const time=t.time.toLocaleTimeString('en-GB',{hour12:false});
+      const dirCls=t.direction==='HIGHER'?'text-white':'text-zinc-400';
+      const resCls=t.result==='WIN'?'bg-white text-black px-1.5 py-0.5 rounded text-[10px] font-bold':'border border-zinc-700 text-zinc-400 px-1.5 py-0.5 rounded text-[10px]';
+      const plCls=t.pl>=0?'text-white':'text-zinc-500';
+      const streak=t.streakAfter>0?'+'+t.streakAfter:''+t.streakAfter;
+      return `<tr class="hover:bg-zinc-900/50 ${t.forced?'bg-zinc-900/30':''}"><td class="px-3 py-2 text-zinc-400 whitespace-nowrap">${time}${t.forced?'<span class="text-[8px] text-zinc-600"> ⚡</span>':''}</td><td class="px-2 py-2 ${dirCls} font-bold text-[10px]">${t.direction}</td><td class="px-2 py-2 text-zinc-300">${t.confidence}</td><td class="px-2 py-2 text-zinc-300">${formatPrice(t.entryPrice)}</td><td class="px-2 py-2"><span class="${resCls}">${t.result}</span></td><td class="px-3 py-2 text-right ${plCls}">${formatMoney(t.pl)}</td><td class="px-2 py-2 text-center ${t.streakAfter>0?'text-white':'text-zinc-500'} font-semibold">${streak}</td></tr>`;
+    }).join('');
+  }
+};
+
+// ---------- UI ----------
+function updateUI(){
+  const priceEl=$('elPrice');
+  priceEl.textContent=formatPrice(state.price);
+  const lastDir=state.ticks.length?state.ticks[state.ticks.length-1].dir:0;
+  const dirEl=$('elPriceDir');
+  if(lastDir===1){dirEl.textContent='▲';dirEl.className='mono text-sm text-white';}
+  else if(lastDir===-1){dirEl.textContent='▼';dirEl.className='mono text-sm text-zinc-500';}
+  else{dirEl.textContent='—';dirEl.className='mono text-sm text-zinc-600';}
+  const chg=state.price-state.prevPrice;
+  const chgEl=$('elPriceChange');
+  chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2);
+  chgEl.className=chg>=0?'text-white':'text-zinc-500';
+  priceEl.classList.remove('tick-flash-up','tick-flash-down');void priceEl.offsetWidth;
+  priceEl.classList.add(lastDir===1?'tick-flash-up':lastDir===-1?'tick-flash-down':'');
+  $('elTickCount').textContent=state.tickCount.toLocaleString();
+  $('elTickDirDetail').textContent=lastDir===1?'UP ▲':lastDir===-1?'DOWN ▼':'—';
+  $('elTickTime').textContent=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  $('elTickSpeedLabel').textContent=state.tickSpeed+'MS / TICK';
+  const sig=state.lastSignal;
+  const regimeTxt=sig?sig.regime:state.regime, volVal=sig?sig.metrics.vol:state.volatility;
+  $('elRegimeBadge').innerHTML=`REGIME: <span class="font-bold regime-${regimeTxt}">${regimeTxt}</span> • VOL ${volVal.toFixed(2)}`;
+  const volPct=clamp((volVal/2.2)*100,4,100);
+  $('elVolMeterFill').style.width=volPct+'%';
+  // pressure
+  const bias=sig?sig.metrics.bias:0.5;
+  $('elPressureLabel').textContent=(bias*100).toFixed(0)+'% UP';
+  $('elPressureUpFill').style.width=(bias*100)+'%';
+  $('elPressureDownFill').style.width=((1-bias)*100)+'%';
+  $('elConnectionStatus').innerHTML=state.isRunning?'<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block dot-live"></span> SIMULATED — LIVE':'<span class="w-1.5 h-1.5 rounded-full bg-zinc-600 inline-block"></span> SIMULATED — PAUSED';
+  // signal box
+  if(sig){
+    const box=$('elSignalBox'),label=$('elSignalLabel'),sub=$('elSignalSub'),mini=$('elMiniSignal'),dots=$('elSignalDots').children;
+    label.textContent=sig.signal;
+    const lit=Math.round(sig.confidence/20);
+    for(let i=0;i<dots.length;i++)dots[i].className='w-8 h-1 rounded-full '+(i<lit?(sig.signal==='HIGHER'?'bg-black':sig.signal==='LOWER'?'bg-white':'bg-zinc-600'):'bg-zinc-800');
+    if(sig.signal==='HIGHER'){box.className='border border-white bg-white text-black rounded-lg p-5 text-center transition-all duration-300 signal-glow-higher';label.className='text-[26px] font-bold tracking-[0.16em] text-black';sub.textContent='EXPECT HIGHER — '+sig.confidence+'% · ABOVE THRESHOLD';sub.className='mono text-[10px] tracking-widest text-zinc-700 mt-1 font-semibold';mini.textContent='HIGHER ▲';mini.className='px-2 py-1 rounded bg-white text-black font-bold border border-white';}
+    else if(sig.signal==='LOWER'){box.className='border border-zinc-400 bg-[#0a0a0a] rounded-lg p-5 text-center transition-all duration-300 signal-glow-lower';label.className='text-[26px] font-bold tracking-[0.16em] text-zinc-50';sub.textContent='EXPECT LOWER — '+sig.confidence+'% · ABOVE THRESHOLD';sub.className='mono text-[10px] tracking-widest text-zinc-300 mt-1 font-semibold';mini.textContent='LOWER ▼';mini.className='px-2 py-1 rounded border border-zinc-400 bg-zinc-900 text-zinc-100 font-bold';}
+    else{box.className='border border-zinc-800 bg-black rounded-lg p-5 text-center transition-all duration-300';label.className='text-[26px] font-bold tracking-[0.16em] text-zinc-600';sub.textContent=`WAIT — NO EDGE · CONF ${sig.confidence}`;sub.className='mono text-[10px] tracking-widest text-zinc-600 mt-1';mini.textContent='WAIT';mini.className='px-2 py-1 rounded border border-zinc-800 bg-black text-zinc-500 font-bold';}
+    $('elConfidenceValue').textContent=sig.confidence+' / 100';
+    $('elConfidenceBar').style.width=sig.confidence+'%';
+    $('elThresholdMarker').style.left=state.threshold+'%';
+    $('elMomentum').textContent=sig.metrics.momentum.toFixed(2);
+    $('elBias').textContent=(sig.metrics.bias*100).toFixed(0)+'% UP';
+    $('elConsecutive').textContent=sig.metrics.consecutive+' × '+(sig.metrics.lastDir===1?'UP':sig.metrics.lastDir===-1?'DOWN':'—');
+    $('elVolStatus').textContent=sig.regime+' • '+sig.metrics.vol.toFixed(2);
+    $('elMeanDist').textContent=sig.metrics.z.toFixed(2)+'σ '+(sig.metrics.z>0?'ABOVE':'BELOW');
+    $('elTrendBadge').textContent=sig.metrics.trend>0?'UP ▲':sig.metrics.trend<0?'DOWN ▼':'FLAT —';
+    $('elExplanation').textContent=sig.explanation;
+    $('elThresholdDisplay').textContent='THRESHOLD '+state.threshold;
+  }
+  const st=StatisticsEngine.compute();
+  $('elCountHigher').textContent=st.higherCount;$('elCountLower').textContent=st.lowerCount;$('elCountWait').textContent=st.waitCount;
+  // performance
+  $('elStartBalance').textContent=formatMoney(state.startingBalance);
+  $('elCurrentBalance').textContent=formatMoney(state.balance);
+  $('elEquityLabel').textContent=formatMoney(state.balance)+' ('+formatMoneySigned(st.totalPL)+')';
+  const plEl=$('elTotalPL');
+  plEl.textContent=formatMoney(st.totalPL);
+  plEl.className='mono text-base font-medium mt-1 '+(st.totalPL>=0?'text-white':'text-zinc-400');
+  $('elTotalPLPct').textContent=((st.totalPL/state.startingBalance)*100).toFixed(2)+'%';
+  $('elTotalPLPct').className='mono text-[10px] '+(st.totalPL>=0?'text-zinc-300':'text-zinc-500');
+  $('elTotalTrades').textContent=state.trades.length;
+  $('elOpenCountLabel').textContent=state.openTrades.length+' OPEN';
+  $('elWins').textContent=st.wins;$('elLosses').textContent=st.losses;
+  $('elWinRate').textContent=st.winRate===null?'—':st.winRate.toFixed(1)+'%';
+  const wrBar=$('elWinRateBar').firstElementChild;if(wrBar)wrBar.style.width=(st.winRate||0)+'%';
+  $('elAvgWin').textContent=st.wins?formatMoney(st.avgWin):'$0.00';
+  $('elAvgLoss').textContent=st.losses?formatMoney(st.avgLoss):'$0.00';
+  const evEl=$('elEV');evEl.textContent=formatMoney(st.ev);evEl.className='font-semibold '+(st.ev>=0?'text-white':'text-zinc-400');
+  $('elProfitFactor').textContent=st.grossLoss===0?(st.grossProfit>0?'∞':'—'):st.pf.toFixed(2);
+  $('elCurrWinStreak').textContent=state.currentWinStreak;
+  $('elCurrLossStreak').textContent=state.currentLossStreak;
+  $('elMaxLossStreak').textContent=state.maxLosingStreak;
+  $('elMaxDrawdown').textContent=formatMoney(state.maxDrawdownActual);
+  $('elTradeProgressFill').style.width=clamp((state.trades.length/state.maxTrades)*100,0,100)+'%';
+  $('elTradeProgressLabel').textContent=state.trades.length+' / '+state.maxTrades;
+  const ddNow=state.peakBalance-state.balance;
+  $('elDDProgressFill').style.width=clamp((ddNow/state.maxDrawdown)*100,0,100)+'%';
+  $('elDDProgressFill').className='h-full transition-all '+(ddNow/state.maxDrawdown>0.7?'bg-white':'bg-zinc-500');
+  $('elDDProgressLabel').textContent=formatMoney(ddNow)+' / '+formatMoney(state.maxDrawdown);
+  // analysis
+  $('elAnalyWinRate').textContent=st.winRate===null?'—':st.winRate.toFixed(1)+'%';
+  $('elAnalyEV').textContent=formatMoney(st.ev);
+  $('elAnalyProfitFactor').textContent=$('elProfitFactor').textContent;
+  $('elAnalyAvgWin').textContent=$('elAvgWin').textContent;
+  $('elAnalyAvgLoss').textContent=$('elAvgLoss').textContent;
+  $('elAnalyMaxDD').textContent=formatMoney(state.maxDrawdownActual);
+  $('elAnalyMaxStreak').textContent=state.maxLosingStreak;
+  $('elAnalyNumTrades').textContent=state.trades.length;
+  $('elAnalySignalAcc').textContent=st.sigAcc===null?'—':st.sigAcc.toFixed(1)+'%';
+  $('elAnalyHigherAcc').textContent=st.hAcc===null?'—':st.hAcc.toFixed(1)+'%';
+  $('elAnalyLowerAcc').textContent=st.lAcc===null?'—':st.lAcc.toFixed(1)+'%';
+  $('elAnalyWaitFreq').textContent=st.waitFreq.toFixed(1)+'%';
+  $('elAnalyNumSignals').textContent=state.signals.length;
+  $('elAnalyHlw').textContent=`${st.higherCount} / ${st.lowerCount} / ${st.waitCount}`;
+  $('elAnalyResolved').textContent=st.resolved+' / '+state.signals.length;
+  $('elAnalyEdge').textContent=st.sigAcc===null?'—':((st.sigAcc-50)>=0?'+':'')+(st.sigAcc-50).toFixed(1)+'pp';
+  $('elAnalyStakeNote').textContent=formatMoney(state.stake);
+  const be=(1/(1+state.payout)*100);
+  $('elBreakeven').textContent=be.toFixed(1)+'%';
+  // risk
+  const risk=RiskManager.getStatus(state),riskEl=$('elRiskStatus');
+  riskEl.textContent=risk.text;
+  riskEl.className=risk.tone==='halted'?'border border-zinc-500 bg-zinc-900 text-white rounded-lg p-3 leading-relaxed text-[11px] font-semibold':risk.tone==='cooldown'?'border border-zinc-700 bg-[#1a1a1a] text-zinc-200 rounded-lg p-3 leading-relaxed text-[11px]':'border border-zinc-800 bg-black text-zinc-300 rounded-lg p-3 leading-relaxed text-[11px]';
+  $('elCooldownDisplay').textContent=state.cooldownRemaining>0?state.cooldownRemaining+' ticks':'—';
+  $('elTradesRemaining').textContent=Math.max(0,state.maxTrades-state.trades.length);
+  $('elRiskStake').textContent='FIXED '+formatMoney(state.stake);
+  $('elHaltDisplay').textContent=state.isHalted?'YES':'NO';
+  $('elHaltDisplay').className='font-bold '+(state.isHalted?'text-white':'text-zinc-500');
+  // open positions
+  $('elOpenCount').textContent=state.openTrades.length+' OPEN';
+  const op=$('elOpenPositions');
+  if(!state.openTrades.length)op.innerHTML='<div class="mono text-[10px] tracking-widest text-zinc-600 text-center py-6">NO OPEN VIRTUAL TRADES</div>';
+  else op.innerHTML=state.openTrades.map(t=>{
+    const left=Math.max(0,t.resolveTick-state.tickCount);
+    const cur=state.price, pnlDir=t.direction==='HIGHER'?(cur>t.entryPrice?1:cur<t.entryPrice?-1:0):(cur<t.entryPrice?1:cur>t.entryPrice?-1:0);
+    const badge=pnlDir>0?'bg-white text-black':pnlDir<0?'bg-zinc-800 text-zinc-300 border border-zinc-700':'bg-black text-zinc-500 border border-zinc-800';
+    const pct=((SETTLE_TICKS-left)/SETTLE_TICKS*100);
+    return `<div class="border border-zinc-800 bg-black rounded-lg p-2.5"><div class="flex justify-between items-center mono text-[10px]"><span class="font-bold ${t.direction==='HIGHER'?'text-white':'text-zinc-300'}">${t.direction} ${t.forced?'⚡':''}</span><span class="px-1.5 py-0.5 rounded mono text-[9px] font-bold ${badge}">${pnlDir>0?'LEADING':pnlDir<0?'TRAILING':'FLAT'}</span></div><div class="flex justify-between mono text-[10px] text-zinc-500 mt-1"><span>IN ${formatPrice(t.entryPrice)}</span><span>NOW ${formatPrice(cur)}</span><span class="text-zinc-200 font-bold">${left} TICKS LEFT</span></div><div class="h-1 bg-zinc-900 rounded-full mt-1.5 overflow-hidden"><div class="h-full bg-white transition-all" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+  // strip
+  const strip=$('elOpenTradesStrip');
+  strip.innerHTML=state.openTrades.map(t=>{const l=t.resolveTick-state.tickCount;return `<span class="mono text-[9px] tracking-widest border border-zinc-700 bg-zinc-900 px-2 py-1 rounded open-pulse">● ${t.direction} · ${l}T LEFT · ${formatPrice(t.entryPrice)}</span>`;}).join('');
+  TradeHistory.render();
+  $('elHistoryCount').textContent=state.trades.length+' TRADES';
+  const vis=state.ticks.slice(-150);
+  $('elChartInfo').textContent=`${state.tickCount.toLocaleString()} TICKS TOTAL · ${vis.length} PLOTTED • RANGE ${vis.length?Math.min(...vis.map(t=>t.price)).toFixed(2)+' — '+Math.max(...vis.map(t=>t.price)).toFixed(2):'—'}`;
+  ChartModule.draw();ChartModule.drawEquity();
+  // buttons
+  $('btnStart').style.opacity=state.isRunning?'0.45':'1';
+  $('btnStart').style.pointerEvents=state.isRunning?'none':'auto';
+}
+
+// ---------- controls ----------
+function start(){if(state.isRunning)return;if(state.isHalted){toast('SESSION HALTED',state.haltReason,'loss');return;}state.isRunning=true;clearInterval(state.intervalId);state.intervalId=setInterval(generateTick,state.tickSpeed);updateUI();}
+function pause(){state.isRunning=false;clearInterval(state.intervalId);updateUI();}
+function reset(){
+  clearInterval(state.intervalId);
+  const keepSpeed=state.tickSpeed;
+  state.ticks=[];state.price=5000;state.prevPrice=5000;state.tickCount=0;state.isRunning=false;state.tickSpeed=keepSpeed;
+  state.balance=state.startingBalance;state.peakBalance=state.startingBalance;state.balanceHistory=[state.startingBalance];
+  state.maxDrawdownActual=0;state.trades=[];state.openTrades=[];state.signals=[];state.pendingSignals=[];
+  state.currentWinStreak=0;state.currentLossStreak=0;state.maxLosingStreak=0;state.maxWinningStreak=0;
+  state.cooldownRemaining=0;state.isHalted=false;state.haltReason='';state.trend=0;state.regime='NORMAL';state.lastSignal=null;
+  hoverIdx=null;updateUI();toast('RESET COMPLETE','Session cleared · Balance '+formatMoney(state.balance),'info');
+}
+function forceTrade(){
+  if(state.balance<state.stake){toast('INSUFFICIENT BALANCE','Cannot place forced test trade','loss');return;}
+  if(state.trades.length+state.openTrades.length>=state.maxTrades){toast('SESSION LIMIT REACHED','Max trades hit — reset to continue','loss');return;}
+  if((state.peakBalance-state.balance)>=state.maxDrawdown){toast('DRAWDOWN HALT ACTIVE','Reset required','loss');return;}
+  const fb=state.lastSignal||{signal:'WAIT',confidence:0};
+  const t=PaperTradingEngine.enter(fb,true);
+  if(t)updateUI();
+}
+function updateConfig(){
+  state.startingBalance=parseFloat($('inpStartingBalance').value)||10000;
+  state.stake=Math.max(1,parseFloat($('inpStake').value)||10);
+  state.payout=(parseFloat($('inpPayout').value)||80)/100;
+  state.threshold=clamp(parseInt($('inpThreshold').value)||70,50,95);
+  state.maxTrades=Math.max(1,parseInt($('inpMaxTrades').value)||100);
+  state.maxConsecLosses=Math.max(1,parseInt($('inpMaxLosses').value)||3);
+  state.maxDrawdown=Math.max(10,parseFloat($('inpMaxDrawdown').value)||500);
+  state.cooldownDuration=Math.max(0,parseInt($('inpCooldown').value)||10);
+  state.lookback=clamp(parseInt($('inpLookback').value)||30,8,120);
+  if(!state.trades.length&&!state.openTrades.length){state.balance=state.startingBalance;state.peakBalance=state.startingBalance;state.balanceHistory=[state.balance];}
+  try{localStorage.setItem('deriv_bot_v01',JSON.stringify({startingBalance:state.startingBalance,stake:state.stake,payout:state.payout*100,threshold:state.threshold,maxTrades:state.maxTrades,maxConsecLosses:state.maxConsecLosses,maxDrawdown:state.maxDrawdown,cooldownDuration:state.cooldownDuration,lookback:state.lookback}));}catch(e){}
+  updateUI();
+}
+function exportCSV(){
+  if(!state.trades.length){toast('NO TRADES TO EXPORT','Start simulation first','loss');return;}
+  let csv='Time,Direction,Confidence,Entry,Exit,Result,PL,Streak,Forced\n';
+  state.trades.forEach(t=>{csv+=`${t.time.toISOString()},${t.direction},${t.confidence},${t.entryPrice.toFixed(2)},${t.exitPrice?t.exitPrice.toFixed(2):''},${t.result},${t.pl.toFixed(2)},${t.streakAfter},${t.forced?'YES':'NO'}\n`;});
+  const blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='deriv-paper-trades-v01.csv';a.click();
+  toast('CSV EXPORTED',state.trades.length+' trades downloaded','win');
+}
+
+$('btnStart').addEventListener('click',start);
+$('btnPause').addEventListener('click',pause);
+$('btnReset').addEventListener('click',reset);
+$('btnForceTrade').addEventListener('click',forceTrade);
+$('btnExportCSV').addEventListener('click',exportCSV);
+['inpStartingBalance','inpStake','inpPayout','inpThreshold','inpMaxTrades','inpMaxLosses','inpMaxDrawdown','inpCooldown','inpLookback'].forEach(id=>{
+  $(id).addEventListener('input',updateConfig);$(id).addEventListener('change',updateConfig);
+});
+$('btnResetDefaults').addEventListener('click',()=>{
+  $('inpStartingBalance').value=DEFAULTS.startingBalance;$('inpStake').value=DEFAULTS.stake;
+  $('inpPayout').value=DEFAULTS.payout*100;$('inpThreshold').value=DEFAULTS.threshold;
+  $('inpMaxTrades').value=DEFAULTS.maxTrades;$('inpMaxLosses').value=DEFAULTS.maxConsecLosses;
+  $('inpMaxDrawdown').value=DEFAULTS.maxDrawdown;$('inpCooldown').value=DEFAULTS.cooldownDuration;
+  $('inpLookback').value=DEFAULTS.lookback;updateConfig();toast('DEFAULTS RESTORED','70 threshold · $10 stake · 80% payout','win');
+});
+document.querySelectorAll('.speed-btn').forEach(b=>b.addEventListener('click',()=>{
+  state.tickSpeed=parseInt(b.dataset.speed);
+  document.querySelectorAll('.speed-btn').forEach(x=>x.className='speed-btn mono text-[10px] tracking-widest border border-zinc-800 bg-black px-2 py-1.5 rounded hover:border-zinc-500 transition text-zinc-400');
+  b.className='speed-btn mono text-[10px] tracking-widest border border-white bg-zinc-900 px-2 py-1.5 rounded transition text-white';
+  if(state.isRunning){clearInterval(state.intervalId);state.intervalId=setInterval(generateTick,state.tickSpeed);}
+  updateUI();
+}));
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();state.isRunning?pause():start();}
+  if(e.key==='f'||e.key==='F')forceTrade();
+  if(e.key==='r'||e.key==='R')reset();
+});
+// chart hover
+(function(){
+  const c=$('elChartCanvas'),tip=$('elChartTip');
+  c.addEventListener('mousemove',e=>{
+    const g=c._geom;if(!g||!g.visible.length)return;
+    const r=c.getBoundingClientRect(),mx=e.clientX-r.left;
+    let best=0,bd=1e9;g.visible.forEach((t,i)=>{const d=Math.abs(g.X(i)-mx);if(d<bd){bd=d;best=i;}});
+    hoverIdx=best;ChartModule.draw();
+    const t=g.visible[best];
+    tip.classList.remove('hidden');
+    tip.style.left=Math.min(Math.max(g.X(best)+12,50),r.width-140)+'px';
+    tip.style.top=(g.Y(t.price)-34)+'px';
+    tip.innerHTML=`TICK #${t.tickIndex} · ${formatPrice(t.price)} <span class="${t.dir===1?'text-white':t.dir===-1?'text-zinc-400':'text-zinc-600'}">${t.dir===1?'▲ UP':t.dir===-1?'▼ DOWN':'— FLAT'}</span>`;
   });
-  </script>
+  c.addEventListener('mouseleave',()=>{hoverIdx=null;tip.classList.add('hidden');ChartModule.draw();});
+})();
+window.addEventListener('resize',()=>{ChartModule.draw();ChartModule.drawEquity();});
+// load saved settings
+try{
+  const s=JSON.parse(localStorage.getItem('deriv_bot_v01')||'null');
+  if(s){$('inpStartingBalance').value=s.startingBalance;$('inpStake').value=s.stake;$('inpPayout').value=s.payout;$('inpThreshold').value=s.threshold;$('inpMaxTrades').value=s.maxTrades;$('inpMaxLosses').value=s.maxConsecLosses;$('inpMaxDrawdown').value=s.maxDrawdown;$('inpCooldown').value=s.cooldownDuration;$('inpLookback').value=s.lookback;}
+}catch(e){}
+updateConfig();updateUI();
+</script>
 </body>
 </html>
